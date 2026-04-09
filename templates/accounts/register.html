@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Register New User — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Register New User</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'user-list' %}" class="btn btn--secondary">
+            Back to Users
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Create User Account</h2>
+            <p class="card__subtitle">Admin-only: Register a new user and assign their role.</p>
+        </div>
+    </div>
+    <div class="card__body">
+        {% if messages %}
+        <div class="messages mb-4">
+            {% for message in messages %}
+            <div class="alert alert--{{ message.tags }}" data-auto-dismiss="5000">
+                <div class="alert__content">
+                    <p>{{ message }}</p>
+                </div>
+                <button type="button" class="alert__dismiss" onclick="this.parentElement.remove();">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert--danger mb-4">
+            <div class="alert__content">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'register' %}" data-validate class="form" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_first_name" class="form-label form-label--required">First Name</label>
+                    <input type="text" name="first_name" id="id_first_name"
+                           class="form-input {% if form.first_name.errors %}form-input--error{% endif %}"
+                           value="{{ form.first_name.value|default:'' }}"
+                           required
+                           placeholder="Enter first name">
+                    {% if form.first_name.errors %}
+                        {% for error in form.first_name.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_last_name" class="form-label form-label--required">Last Name</label>
+                    <input type="text" name="last_name" id="id_last_name"
+                           class="form-input {% if form.last_name.errors %}form-input--error{% endif %}"
+                           value="{{ form.last_name.value|default:'' }}"
+                           required
+                           placeholder="Enter last name">
+                    {% if form.last_name.errors %}
+                        {% for error in form.last_name.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_email" class="form-label form-label--required">Email Address</label>
+                    <input type="email" name="email" id="id_email"
+                           class="form-input {% if form.email.errors %}form-input--error{% endif %}"
+                           value="{{ form.email.value|default:'' }}"
+                           required
+                           placeholder="user@example.com">
+                    {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_role" class="form-label form-label--required">Role</label>
+                    <select name="role" id="id_role"
+                            class="form-select {% if form.role.errors %}form-select--error{% endif %}"
+                            required>
+                        <option value="">Select a role</option>
+                        <option value="admin" {% if form.role.value == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="sales" {% if form.role.value == 'sales' %}selected{% endif %}>Sales</option>
+                        <option value="support" {% if form.role.value == 'support' %}selected{% endif %}>Support</option>
+                    </select>
+                    {% if form.role.errors %}
+                        {% for error in form.role.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Determines the user's permissions within the CRM.</span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_password1" class="form-label form-label--required">Password</label>
+                    <input type="password" name="password1" id="id_password1"
+                           class="form-input {% if form.password1.errors %}form-input--error{% endif %}"
+                           required
+                           data-min-length="8"
+                           placeholder="Enter password">
+                    {% if form.password1.errors %}
+                        {% for error in form.password1.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Must be at least 8 characters and not entirely numeric.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password2" class="form-label form-label--required">Confirm Password</label>
+                    <input type="password" name="password2" id="id_password2"
+                           class="form-input {% if form.password2.errors %}form-input--error{% endif %}"
+                           required
+                           placeholder="Confirm password">
+                    {% if form.password2.errors %}
+                        {% for error in form.password2.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_phone_number" class="form-label">Phone Number</label>
+                    <input type="tel" name="phone_number" id="id_phone_number"
+                           class="form-input {% if form.phone_number.errors %}form-input--error{% endif %}"
+                           value="{{ form.phone_number.value|default:'' }}"
+                           data-validate-phone
+                           placeholder="e.g. +1 (555) 123-4567">
+                    {% if form.phone_number.errors %}
+                        {% for error in form.phone_number.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_job_title" class="form-label">Job Title</label>
+                    <input type="text" name="job_title" id="id_job_title"
+                           class="form-input {% if form.job_title.errors %}form-input--error{% endif %}"
+                           value="{{ form.job_title.value|default:'' }}"
+                           placeholder="e.g. Sales Manager">
+                    {% if form.job_title.errors %}
+                        {% for error in form.job_title.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_department" class="form-label">Department</label>
+                <input type="text" name="department" id="id_department"
+                       class="form-input {% if form.department.errors %}form-input--error{% endif %}"
+                       value="{{ form.department.value|default:'' }}"
+                       placeholder="e.g. Sales, Support, Engineering">
+                {% if form.department.errors %}
+                    {% for error in form.department.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'user-list' %}" class="btn btn--secondary">Cancel</a>
+                <button type="submit" class="btn btn--primary">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

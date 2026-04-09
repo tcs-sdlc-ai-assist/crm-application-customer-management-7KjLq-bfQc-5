@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Task: {{ task.title }} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">{{ task.title }}</h1>
+        <p class="text-secondary text-sm mt-1">
+            Created {{ task.created_at|date:"N j, Y, P" }}
+            {% if task.created_by %}by {{ task.created_by.get_full_name|default:task.created_by.email }}{% endif %}
+        </p>
+    </div>
+    <div class="page-header__actions">
+        <a href="{% url 'task-list' %}" class="btn btn--secondary">
+            &larr; Back to Tasks
+        </a>
+        <a href="{% url 'task-update' task.pk %}" class="btn btn--primary">
+            Edit Task
+        </a>
+        <form method="post" action="{% url 'task-delete' task.pk %}" data-confirm-delete-form="Are you sure you want to delete this task? This action cannot be undone." style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn--danger">Delete</button>
+        </form>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages mb-4">
+    {% for message in messages %}
+        <div class="alert alert--{{ message.tags }}" data-auto-dismiss="5000">
+            {{ message }}
+            <button type="button" class="alert__dismiss" onclick="this.parentElement.remove();">&times;</button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="d-grid" style="grid-template-columns: 2fr 1fr; gap: 20px;">
+    <div>
+        <div class="card mb-4">
+            <div class="card__header">
+                <h2 class="card__title">Task Details</h2>
+            </div>
+            <div class="card__body">
+                <div class="form-group mb-4">
+                    <label class="form-label font-bold">Description</label>
+                    {% if task.description %}
+                        <p style="white-space: pre-wrap; line-height: 1.6;">{{ task.description }}</p>
+                    {% else %}
+                        <p class="text-muted">No description provided.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card__header">
+                <h2 class="card__title">Status Update</h2>
+            </div>
+            <div class="card__body">
+                <form method="post" action="{% url 'task-update' task.pk %}" class="d-flex align-center gap-3 flex-wrap">
+                    {% csrf_token %}
+                    <div class="form-group" style="min-width: 180px;">
+                        <label class="form-label" for="id_status">Status</label>
+                        <select name="status" id="id_status" class="form-select">
+                            <option value="todo" {% if task.status == "todo" %}selected{% endif %}>To Do</option>
+                            <option value="in_progress" {% if task.status == "in_progress" %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if task.status == "completed" %}selected{% endif %}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="min-width: 180px;">
+                        <label class="form-label" for="id_priority">Priority</label>
+                        <select name="priority" id="id_priority" class="form-select">
+                            <option value="low" {% if task.priority == "low" %}selected{% endif %}>Low</option>
+                            <option value="medium" {% if task.priority == "medium" %}selected{% endif %}>Medium</option>
+                            <option value="high" {% if task.priority == "high" %}selected{% endif %}>High</option>
+                            <option value="urgent" {% if task.priority == "urgent" %}selected{% endif %}>Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="align-self: flex-end;">
+                        <button type="submit" class="btn btn--primary btn--sm">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if task.customer or task.deal %}
+        <div class="card mb-4">
+            <div class="card__header">
+                <h2 class="card__title">Linked Records</h2>
+            </div>
+            <div class="card__body">
+                {% if task.customer %}
+                <div class="d-flex align-center gap-2 mb-3">
+                    <span class="badge badge--info">Customer</span>
+                    <a href="{% url 'customer-detail' task.customer.pk %}">{{ task.customer.name }}</a>
+                    {% if task.customer.email %}
+                        <span class="text-muted text-sm">({{ task.customer.email }})</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if task.deal %}
+                <div class="d-flex align-center gap-2 mb-3">
+                    <span class="badge badge--primary">Deal</span>
+                    <a href="{% url 'deal-detail' task.deal.pk %}">{{ task.deal.title|default:task.deal }}</a>
+                    {% if task.deal.value %}
+                        <span class="text-muted text-sm">({{ task.deal.value }})</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="card mb-4">
+            <div class="card__header">
+                <h2 class="card__title">Information</h2>
+            </div>
+            <div class="card__body">
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Status</span>
+                    {% if task.status == "todo" %}
+                        <span class="badge badge--secondary">To Do</span>
+                    {% elif task.status == "in_progress" %}
+                        <span class="badge badge--info">In Progress</span>
+                    {% elif task.status == "completed" %}
+                        <span class="badge badge--success">Completed</span>
+                    {% else %}
+                        <span class="badge badge--secondary">{{ task.status }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Priority</span>
+                    {% if task.priority == "low" %}
+                        <span class="badge badge--secondary">Low</span>
+                    {% elif task.priority == "medium" %}
+                        <span class="badge badge--info">Medium</span>
+                    {% elif task.priority == "high" %}
+                        <span class="badge badge--warning">High</span>
+                    {% elif task.priority == "urgent" %}
+                        <span class="badge badge--danger">Urgent</span>
+                    {% else %}
+                        <span class="badge badge--secondary">{{ task.priority }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Assignee</span>
+                    {% if task.assigned_to %}
+                        <div class="d-flex align-center gap-2">
+                            <span class="avatar avatar--sm">{{ task.assigned_to.first_name|truncatechars:1 }}{{ task.assigned_to.last_name|truncatechars:1 }}</span>
+                            <span>{{ task.assigned_to.get_full_name|default:task.assigned_to.email }}</span>
+                        </div>
+                    {% else %}
+                        <span class="text-muted">Unassigned</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Due Date</span>
+                    {% if task.due_date %}
+                        <span>{{ task.due_date|date:"N j, Y" }}</span>
+                        {% if task.is_overdue %}
+                            <span class="badge badge--danger ml-2">Overdue</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">No due date set</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Reminder Date</span>
+                    {% if task.reminder_date %}
+                        <span>{{ task.reminder_date|date:"N j, Y, P" }}</span>
+                    {% else %}
+                        <span class="text-muted">No reminder set</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Created</span>
+                    <span>{{ task.created_at|date:"N j, Y, P" }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-secondary text-sm d-block mb-1">Last Updated</span>
+                    <span>{{ task.updated_at|date:"N j, Y, P" }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if task.status != "completed" %}
+        <div class="card">
+            <div class="card__body">
+                <form method="post" action="{% url 'task-complete' task.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--success btn--block">
+                        &#10003; Mark as Completed
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Login — CRM App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-center align-center" style="min-height: 60vh;">
+    <div class="card" style="width: 100%; max-width: 440px;">
+        <div class="card__header" style="justify-content: center;">
+            <div>
+                <h1 class="card__title text-center">Sign In</h1>
+                <p class="card__subtitle text-center">Enter your credentials to access your account</p>
+            </div>
+        </div>
+        <div class="card__body">
+            {% if form.errors %}
+            <div class="alert alert--danger mb-4">
+                <div class="alert__content">
+                    <div class="alert__title">Login Failed</div>
+                    {% if form.non_field_errors %}
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p>Please enter a correct email and password. Note that both fields may be case-sensitive.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert--{{ message.tags }} mb-4">
+                    <div class="alert__content">{{ message }}</div>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}" class="form" data-validate>
+                {% csrf_token %}
+
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="id_username" class="form-label form-label--required">Email</label>
+                    <input
+                        type="email"
+                        name="username"
+                        id="id_username"
+                        class="form-input {% if form.username.errors %}form-input--error{% endif %}"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        autofocus
+                        required
+                        value="{{ form.username.value|default:'' }}"
+                    >
+                    {% if form.username.errors %}
+                        {% for error in form.username.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password" class="form-label form-label--required">Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="id_password"
+                        class="form-input {% if form.password.errors %}form-input--error{% endif %}"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+                    {% if form.password.errors %}
+                        {% for error in form.password.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-actions" style="justify-content: center;">
+                    <button type="submit" class="btn btn--primary btn--block">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card__footer text-center">
+            <p class="text-sm text-secondary">
+                Don't have an account? Contact your administrator to request access.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

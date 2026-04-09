@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Meeting{% else %}Schedule Meeting{% endif %} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">{% if form.instance.pk %}Edit Meeting{% else %}Schedule Meeting{% endif %}</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'communication-list' %}" class="btn btn--secondary">
+            Cancel
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">{% if form.instance.pk %}Edit Meeting Details{% else %}New Meeting{% endif %}</h2>
+            <p class="card__subtitle">Fill in the meeting details below. Fields marked with * are required.</p>
+        </div>
+    </div>
+    <div class="card__body">
+        <form method="post" action="" data-validate class="form" id="meeting-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert--danger">
+                <div class="alert__content">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.customer.id_for_label }}" class="form-label form-label--required">Customer</label>
+                    <select name="{{ form.customer.html_name }}" id="{{ form.customer.id_for_label }}" class="form-select {% if form.customer.errors %}form-select--error{% endif %}" required>
+                        <option value="">— Select a customer —</option>
+                        {% for value, label in form.customer.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.customer.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.customer.errors %}
+                        {% for error in form.customer.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.customer.help_text %}
+                    <span class="form-help">{{ form.customer.help_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label form-label--required">Title</label>
+                    <input type="text" name="{{ form.title.html_name }}" id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}" class="form-input {% if form.title.errors %}form-input--error{% endif %}" placeholder="e.g. Quarterly Review Meeting" required maxlength="255">
+                    {% if form.title.errors %}
+                        {% for error in form.title.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.title.help_text %}
+                    <span class="form-help">{{ form.title.help_text }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group form-group--full">
+                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                <textarea name="{{ form.description.html_name }}" id="{{ form.description.id_for_label }}" class="form-textarea {% if form.description.errors %}form-textarea--error{% endif %}" rows="4" placeholder="Meeting agenda, topics to discuss, preparation notes...">{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                    {% for error in form.description.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+                {% if form.description.help_text %}
+                <span class="form-help">{{ form.description.help_text }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.start_datetime.id_for_label }}" class="form-label form-label--required">Start Date &amp; Time</label>
+                    <input type="datetime-local" name="{{ form.start_datetime.html_name }}" id="{{ form.start_datetime.id_for_label }}" value="{{ form.start_datetime.value|default:'' }}" class="form-input {% if form.start_datetime.errors %}form-input--error{% endif %}" required>
+                    {% if form.start_datetime.errors %}
+                        {% for error in form.start_datetime.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.start_datetime.help_text %}
+                    <span class="form-help">{{ form.start_datetime.help_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.end_datetime.id_for_label }}" class="form-label form-label--required">End Date &amp; Time</label>
+                    <input type="datetime-local" name="{{ form.end_datetime.html_name }}" id="{{ form.end_datetime.id_for_label }}" value="{{ form.end_datetime.value|default:'' }}" class="form-input {% if form.end_datetime.errors %}form-input--error{% endif %}" required>
+                    {% if form.end_datetime.errors %}
+                        {% for error in form.end_datetime.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.end_datetime.help_text %}
+                    <span class="form-help">{{ form.end_datetime.help_text }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                    <input type="text" name="{{ form.location.html_name }}" id="{{ form.location.id_for_label }}" value="{{ form.location.value|default:'' }}" class="form-input {% if form.location.errors %}form-input--error{% endif %}" placeholder="e.g. Conference Room A, Zoom link, etc." maxlength="255">
+                    {% if form.location.errors %}
+                        {% for error in form.location.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.location.help_text %}
+                    <span class="form-help">{{ form.location.help_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Google Calendar Sync</label>
+                    <div class="form-checkbox" style="margin-top: 8px;">
+                        <input type="checkbox" name="sync_google_calendar" id="id_sync_google_calendar" value="1" {% if form.data.sync_google_calendar or sync_google_calendar %}checked{% endif %}>
+                        <label for="id_sync_google_calendar">Sync this meeting with Google Calendar</label>
+                    </div>
+                    <span class="form-help">If enabled, this meeting will be created as a Google Calendar event. Requires Google Calendar integration to be configured.</span>
+                </div>
+            </div>
+
+            {% if form.deal %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.deal.id_for_label }}" class="form-label">Associated Deal</label>
+                    <select name="{{ form.deal.html_name }}" id="{{ form.deal.id_for_label }}" class="form-select {% if form.deal.errors %}form-select--error{% endif %}">
+                        <option value="">— No deal associated —</option>
+                        {% for value, label in form.deal.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.deal.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.deal.errors %}
+                        {% for error in form.deal.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.deal.help_text %}
+                    <span class="form-help">{{ form.deal.help_text }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if form.attendees %}
+            <div class="form-group form-group--full">
+                <label for="{{ form.attendees.id_for_label }}" class="form-label">Attendees</label>
+                <select name="{{ form.attendees.html_name }}" id="{{ form.attendees.id_for_label }}" class="form-select {% if form.attendees.errors %}form-select--error{% endif %}" multiple>
+                    {% for value, label in form.attendees.field.choices %}
+                    <option value="{{ value }}" {% if value|stringformat:"s" in form.attendees.value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.attendees.errors %}
+                    {% for error in form.attendees.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+                <span class="form-help">Hold Ctrl (Cmd on Mac) to select multiple attendees.</span>
+            </div>
+            {% endif %}
+
+            {% if form.notes %}
+            <div class="form-group form-group--full">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                <textarea name="{{ form.notes.html_name }}" id="{{ form.notes.id_for_label }}" class="form-textarea {% if form.notes.errors %}form-textarea--error{% endif %}" rows="3" placeholder="Additional notes or follow-up items...">{{ form.notes.value|default:'' }}</textarea>
+                {% if form.notes.errors %}
+                    {% for error in form.notes.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+                {% if form.notes.help_text %}
+                <span class="form-help">{{ form.notes.help_text }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{% url 'communication-list' %}" class="btn btn--secondary">Cancel</a>
+                <button type="submit" class="btn btn--primary">
+                    {% if form.instance.pk %}Update Meeting{% else %}Schedule Meeting{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    var startInput = document.getElementById('{{ form.start_datetime.id_for_label }}');
+    var endInput = document.getElementById('{{ form.end_datetime.id_for_label }}');
+
+    if (startInput && endInput) {
+        startInput.addEventListener('change', function () {
+            if (startInput.value && !endInput.value) {
+                var startDate = new Date(startInput.value);
+                startDate.setHours(startDate.getHours() + 1);
+                var year = startDate.getFullYear();
+                var month = String(startDate.getMonth() + 1).padStart(2, '0');
+                var day = String(startDate.getDate()).padStart(2, '0');
+                var hours = String(startDate.getHours()).padStart(2, '0');
+                var minutes = String(startDate.getMinutes()).padStart(2, '0');
+                endInput.value = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+            }
+            if (endInput.value && startInput.value > endInput.value) {
+                endInput.value = '';
+            }
+        });
+
+        endInput.addEventListener('change', function () {
+            if (startInput.value && endInput.value && endInput.value <= startInput.value) {
+                endInput.setCustomValidity('End time must be after start time.');
+            } else {
+                endInput.setCustomValidity('');
+            }
+        });
+    }
+
+    var form = document.getElementById('meeting-form');
+    if (form) {
+        form.addEventListener('submit', function (event) {
+            if (startInput && endInput && startInput.value && endInput.value) {
+                if (endInput.value <= startInput.value) {
+                    event.preventDefault();
+                    endInput.setCustomValidity('End time must be after start time.');
+                    endInput.reportValidity();
+                    return false;
+                }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sales Stages Management — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Sales Stages Management</h1>
+    <div class="page-header__actions">
+        <button type="button" class="btn btn--primary" id="btn-add-stage" onclick="document.getElementById('add-stage-form').style.display='block'; this.style.display='none';">
+            <span class="btn__icon">+</span> Add Stage
+        </button>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+        <div class="alert alert--{{ message.tags }}" data-auto-dismiss="5000">
+            {{ message }}
+            <button type="button" class="alert__dismiss" onclick="this.parentElement.remove();">&times;</button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card mb-6" id="add-stage-form" style="display: none;">
+    <div class="card__header">
+        <h2 class="card__title">Add New Stage</h2>
+        <div class="card__actions">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="document.getElementById('add-stage-form').style.display='none'; document.getElementById('btn-add-stage').style.display='inline-flex';">
+                Cancel
+            </button>
+        </div>
+    </div>
+    <div class="card__body">
+        <form method="post" action="{% url 'sales-stage-create' %}" data-validate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_name" class="form-label form-label--required">Stage Name</label>
+                        <input type="text" name="name" id="id_name" class="form-input" placeholder="e.g. Prospecting" required maxlength="255">
+                        <span class="form-help">Enter a descriptive name for this sales stage.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_order" class="form-label form-label--required">Display Order</label>
+                        <input type="number" name="order" id="id_order" class="form-input" placeholder="e.g. 1" required min="0" step="1">
+                        <span class="form-help">Stages are displayed in ascending order.</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_is_active" class="form-checkbox">
+                            <input type="checkbox" name="is_active" id="id_is_active" checked>
+                            <span class="form-label">Active</span>
+                        </label>
+                        <span class="form-help">Inactive stages will not appear in the pipeline.</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn--secondary" onclick="document.getElementById('add-stage-form').style.display='none'; document.getElementById('btn-add-stage').style.display='inline-flex';">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn--primary">Create Stage</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Sales Stages</h2>
+            <p class="card__subtitle">Manage your sales pipeline stages. Drag to reorder or use the order field.</p>
+        </div>
+    </div>
+    <div class="card__body p-0">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Stage Name</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Deals</th>
+                        <th class="table__cell--actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if stages %}
+                        {% for stage in stages %}
+                        <tr id="stage-row-{{ stage.id }}">
+                            <td>
+                                <span class="badge badge--secondary">{{ stage.order }}</span>
+                            </td>
+                            <td>
+                                <span class="font-semibold" id="stage-name-display-{{ stage.id }}">{{ stage.name }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if stage.is_active %}
+                                    <span class="badge badge--success">Active</span>
+                                {% else %}
+                                    <span class="badge badge--danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge--info">{{ stage.deal_count|default:"0" }}</span>
+                            </td>
+                            <td class="table__cell--actions">
+                                <button type="button" class="btn btn--ghost btn--sm" onclick="toggleEditForm('{{ stage.id }}');">
+                                    Edit
+                                </button>
+                                <form method="post" action="{% url 'sales-stage-delete' stage.id %}" style="display: inline;" data-confirm-delete-form="Are you sure you want to delete the '{{ stage.name }}' stage? This action cannot be undone.">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr id="stage-edit-{{ stage.id }}" style="display: none;">
+                            <td colspan="5">
+                                <form method="post" action="{% url 'sales-stage-update' stage.id %}" data-validate>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update">
+                                    <div class="form" style="padding: 12px 0;">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="id_edit_name_{{ stage.id }}" class="form-label form-label--required">Stage Name</label>
+                                                <input type="text" name="name" id="id_edit_name_{{ stage.id }}" class="form-input" value="{{ stage.name }}" required maxlength="255">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_edit_order_{{ stage.id }}" class="form-label form-label--required">Display Order</label>
+                                                <input type="number" name="order" id="id_edit_order_{{ stage.id }}" class="form-input" value="{{ stage.order }}" required min="0" step="1">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="id_edit_is_active_{{ stage.id }}" class="form-checkbox">
+                                                    <input type="checkbox" name="is_active" id="id_edit_is_active_{{ stage.id }}" {% if stage.is_active %}checked{% endif %}>
+                                                    <span class="form-label">Active</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="button" class="btn btn--secondary btn--sm" onclick="toggleEditForm('{{ stage.id }}');">
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="btn btn--primary btn--sm">Save Changes</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-state__title">No Sales Stages Defined</div>
+                                    <p class="empty-state__description">
+                                        Create your first sales stage to start building your pipeline.
+                                        Stages define the steps a deal goes through from initial contact to close.
+                                    </p>
+                                    <button type="button" class="btn btn--primary" onclick="document.getElementById('add-stage-form').style.display='block'; document.getElementById('btn-add-stage').style.display='none';">
+                                        <span class="btn__icon">+</span> Add Your First Stage
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    window.toggleEditForm = function (stageId) {
+        var editRow = document.getElementById('stage-edit-' + stageId);
+        if (!editRow) {
+            return;
+        }
+        if (editRow.style.display === 'none' || editRow.style.display === '') {
+            var allEditRows = document.querySelectorAll('[id^="stage-edit-"]');
+            allEditRows.forEach(function (row) {
+                row.style.display = 'none';
+            });
+            editRow.style.display = 'table-row';
+        } else {
+            editRow.style.display = 'none';
+        }
+    };
+})();
+</script>
+{% endblock %}

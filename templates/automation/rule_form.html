@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Automation Rule{% else %}Create Automation Rule{% endif %} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">{% if form.instance.pk %}Edit Automation Rule{% else %}Create Automation Rule{% endif %}</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'automation-list' %}" class="btn btn--secondary">
+            Cancel
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">{% if form.instance.pk %}Edit Rule: {{ form.instance.name }}{% else %}New Automation Rule{% endif %}</h2>
+            <p class="card__subtitle">Configure trigger conditions and automated actions for your CRM workflows.</p>
+        </div>
+    </div>
+    <div class="card__body">
+        <form method="post" class="form" data-validate novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert--danger">
+                <div class="alert__content">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-row">
+                <div class="form-group form-group--full">
+                    <label for="id_name" class="form-label form-label--required">Rule Name</label>
+                    <input
+                        type="text"
+                        name="name"
+                        id="id_name"
+                        class="form-input {% if form.name.errors %}form-input--error{% endif %}"
+                        value="{{ form.name.value|default:'' }}"
+                        placeholder="e.g., Follow-up after demo"
+                        maxlength="255"
+                        required
+                    >
+                    {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">A descriptive name to identify this automation rule.</span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_trigger_type" class="form-label form-label--required">Trigger Type</label>
+                    <select
+                        name="trigger_type"
+                        id="id_trigger_type"
+                        class="form-select {% if form.trigger_type.errors %}form-select--error{% endif %}"
+                        required
+                    >
+                        <option value="">— Select a trigger —</option>
+                        {% for value, label in form.fields.trigger_type.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.trigger_type.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.trigger_type.errors %}
+                        {% for error in form.trigger_type.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">The event that will trigger this automation rule.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_action_type" class="form-label form-label--required">Action Type</label>
+                    <select
+                        name="action_type"
+                        id="id_action_type"
+                        class="form-select {% if form.action_type.errors %}form-select--error{% endif %}"
+                        required
+                    >
+                        <option value="">— Select an action —</option>
+                        {% for value, label in form.fields.action_type.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.action_type.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.action_type.errors %}
+                        {% for error in form.action_type.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">The action to perform when the trigger fires.</span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group form-group--full">
+                    <label for="id_config" class="form-label">Configuration (JSON)</label>
+                    <textarea
+                        name="config"
+                        id="id_config"
+                        class="form-textarea {% if form.config.errors %}form-textarea--error{% endif %}"
+                        rows="8"
+                        placeholder='{"email_template": "follow_up", "delay_hours": 24}'
+                    >{{ form.config.value|default:'{}' }}</textarea>
+                    {% if form.config.errors %}
+                        {% for error in form.config.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Rule parameters and criteria in JSON format. Define conditions and action-specific settings.</span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group form-group--full">
+                    <div class="form-checkbox">
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            id="id_is_active"
+                            {% if form.is_active.value %}checked{% endif %}
+                        >
+                        <label for="id_is_active" class="form-label">Active</label>
+                    </div>
+                    {% if form.is_active.errors %}
+                        {% for error in form.is_active.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Only active rules will be evaluated and executed when triggers fire.</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'automation-list' %}" class="btn btn--secondary">Cancel</a>
+                <button type="submit" class="btn btn--primary">
+                    {% if form.instance.pk %}Update Rule{% else %}Create Rule{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    var configField = document.getElementById('id_config');
+    if (!configField) return;
+
+    function validateJSON() {
+        var value = configField.value.trim();
+        if (value === '') {
+            configField.classList.remove('form-textarea--error');
+            return true;
+        }
+        try {
+            JSON.parse(value);
+            configField.classList.remove('form-textarea--error');
+            return true;
+        } catch (e) {
+            configField.classList.add('form-textarea--error');
+            return false;
+        }
+    }
+
+    function formatJSON() {
+        var value = configField.value.trim();
+        if (value === '') return;
+        try {
+            var parsed = JSON.parse(value);
+            configField.value = JSON.stringify(parsed, null, 2);
+            configField.classList.remove('form-textarea--error');
+        } catch (e) {
+            configField.classList.add('form-textarea--error');
+        }
+    }
+
+    configField.addEventListener('blur', function() {
+        formatJSON();
+    });
+
+    configField.addEventListener('input', function() {
+        validateJSON();
+    });
+
+    var form = configField.closest('form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!validateJSON()) {
+                event.preventDefault();
+                event.stopPropagation();
+                configField.focus();
+
+                var existingError = configField.parentNode.querySelector('.form-error.json-error');
+                if (!existingError) {
+                    var errorSpan = document.createElement('span');
+                    errorSpan.className = 'form-error json-error';
+                    errorSpan.textContent = 'Please enter valid JSON.';
+                    configField.parentNode.insertBefore(errorSpan, configField.nextSibling);
+                }
+            } else {
+                var existingError = configField.parentNode.querySelector('.form-error.json-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
+    }
+
+    // Format on initial load if there's existing content
+    formatJSON();
+})();
+</script>
+{% endblock %}

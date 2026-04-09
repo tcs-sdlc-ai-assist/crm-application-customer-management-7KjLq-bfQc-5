@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Integration Settings — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Integration Settings</h1>
+</div>
+
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Gmail Integration</h2>
+            <p class="card__subtitle">Sync emails with customer communication logs and send emails directly from CRM.</p>
+        </div>
+        <div class="card__actions">
+            {% if gmail_integration and gmail_integration.is_active %}
+                <span class="badge badge--success">Connected</span>
+            {% else %}
+                <span class="badge badge--secondary">Disconnected</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card__body">
+        {% if gmail_integration and gmail_integration.is_active %}
+            <div class="d-flex align-center justify-between flex-wrap gap-4">
+                <div>
+                    <p class="text-sm text-secondary mb-1">
+                        <strong>Status:</strong> Active
+                    </p>
+                    {% if gmail_integration.token_expiry %}
+                        <p class="text-sm text-secondary mb-1">
+                            <strong>Token Expires:</strong> {{ gmail_integration.token_expiry|date:"N j, Y, P" }}
+                        </p>
+                    {% endif %}
+                    <p class="text-sm text-secondary">
+                        <strong>Connected Since:</strong> {{ gmail_integration.created_at|date:"N j, Y, P" }}
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{% url 'integration-disconnect' %}" data-confirm-delete-form="Are you sure you want to disconnect Gmail? This will stop email syncing.">
+                        {% csrf_token %}
+                        <input type="hidden" name="service_type" value="gmail">
+                        <button type="submit" class="btn btn--danger btn--sm">Disconnect</button>
+                    </form>
+                    <a href="{% url 'integration-oauth-connect' service_type='gmail' %}" class="btn btn--secondary btn--sm">Reconnect</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="d-flex align-center justify-between flex-wrap gap-4">
+                <p class="text-secondary">Connect your Gmail account to sync emails and send messages directly from the CRM.</p>
+                <a href="{% url 'integration-oauth-connect' service_type='gmail' %}" class="btn btn--primary btn--sm">
+                    Connect Gmail
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Google Calendar Integration</h2>
+            <p class="card__subtitle">Two-way sync for meetings and scheduled activities.</p>
+        </div>
+        <div class="card__actions">
+            {% if google_calendar_integration and google_calendar_integration.is_active %}
+                <span class="badge badge--success">Connected</span>
+            {% else %}
+                <span class="badge badge--secondary">Disconnected</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card__body">
+        {% if google_calendar_integration and google_calendar_integration.is_active %}
+            <div class="d-flex align-center justify-between flex-wrap gap-4">
+                <div>
+                    <p class="text-sm text-secondary mb-1">
+                        <strong>Status:</strong> Active
+                    </p>
+                    {% if google_calendar_integration.token_expiry %}
+                        <p class="text-sm text-secondary mb-1">
+                            <strong>Token Expires:</strong> {{ google_calendar_integration.token_expiry|date:"N j, Y, P" }}
+                        </p>
+                    {% endif %}
+                    <p class="text-sm text-secondary">
+                        <strong>Connected Since:</strong> {{ google_calendar_integration.created_at|date:"N j, Y, P" }}
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{% url 'integration-disconnect' %}" data-confirm-delete-form="Are you sure you want to disconnect Google Calendar? This will stop calendar syncing.">
+                        {% csrf_token %}
+                        <input type="hidden" name="service_type" value="google_calendar">
+                        <button type="submit" class="btn btn--danger btn--sm">Disconnect</button>
+                    </form>
+                    <a href="{% url 'integration-oauth-connect' service_type='google_calendar' %}" class="btn btn--secondary btn--sm">Reconnect</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="d-flex align-center justify-between flex-wrap gap-4">
+                <p class="text-secondary">Connect your Google Calendar to sync meetings and scheduled activities with the CRM.</p>
+                <a href="{% url 'integration-oauth-connect' service_type='google_calendar' %}" class="btn btn--primary btn--sm">
+                    Connect Google Calendar
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Slack Integration</h2>
+            <p class="card__subtitle">Receive CRM notifications in Slack channels, deal stage change alerts, and daily summary digests.</p>
+        </div>
+        <div class="card__actions">
+            {% if slack_integration and slack_integration.is_active %}
+                <span class="badge badge--success">Connected</span>
+            {% else %}
+                <span class="badge badge--secondary">Disconnected</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card__body">
+        {% if slack_integration and slack_integration.is_active %}
+            <div class="mb-4">
+                <div class="d-flex align-center justify-between flex-wrap gap-4">
+                    <div>
+                        <p class="text-sm text-secondary mb-1">
+                            <strong>Status:</strong> Active
+                        </p>
+                        {% if slack_integration.webhook_url %}
+                            <p class="text-sm text-secondary mb-1">
+                                <strong>Webhook URL:</strong> {{ slack_integration.webhook_url|truncatechars:60 }}
+                            </p>
+                        {% endif %}
+                        <p class="text-sm text-secondary">
+                            <strong>Connected Since:</strong> {{ slack_integration.created_at|date:"N j, Y, P" }}
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{% url 'integration-disconnect' %}" data-confirm-delete-form="Are you sure you want to disconnect Slack? This will stop all Slack notifications.">
+                            {% csrf_token %}
+                            <input type="hidden" name="service_type" value="slack">
+                            <button type="submit" class="btn btn--danger btn--sm">Disconnect</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4" style="border-top: 1px solid var(--color-border); padding-top: 16px;">
+                <h3 class="text-sm font-bold mb-3">Update Webhook Configuration</h3>
+                <form method="post" action="{% url 'integration-webhook-update' %}" data-validate>
+                    {% csrf_token %}
+                    <input type="hidden" name="service_type" value="slack">
+                    <div class="form-row">
+                        <div class="form-group form-group--full">
+                            <label class="form-label" for="slack-webhook-url">Webhook URL</label>
+                            <input
+                                type="url"
+                                id="slack-webhook-url"
+                                name="webhook_url"
+                                class="form-input"
+                                placeholder="https://hooks.slack.com/services/..."
+                                value="{{ slack_integration.webhook_url }}"
+                                required
+                            >
+                            <span class="form-help">Enter your Slack incoming webhook URL to receive CRM notifications.</span>
+                        </div>
+                    </div>
+                    <div class="form-actions mt-3">
+                        <button type="submit" class="btn btn--primary btn--sm">Save Webhook</button>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="mb-4">
+                <p class="text-secondary mb-4">Connect Slack to receive CRM notifications, deal alerts, and daily digests in your channels.</p>
+            </div>
+            <form method="post" action="{% url 'integration-webhook-update' %}" data-validate>
+                {% csrf_token %}
+                <input type="hidden" name="service_type" value="slack">
+                <div class="form-row">
+                    <div class="form-group form-group--full">
+                        <label class="form-label form-label--required" for="slack-webhook-url-new">Slack Webhook URL</label>
+                        <input
+                            type="url"
+                            id="slack-webhook-url-new"
+                            name="webhook_url"
+                            class="form-input"
+                            placeholder="https://hooks.slack.com/services/..."
+                            required
+                        >
+                        <span class="form-help">Create an incoming webhook in your Slack workspace and paste the URL here.</span>
+                    </div>
+                </div>
+                <div class="form-actions mt-3">
+                    <button type="submit" class="btn btn--primary btn--sm">Connect Slack</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if integration_errors %}
+<div class="card mb-6">
+    <div class="card__header">
+        <h2 class="card__title">Recent Integration Errors</h2>
+    </div>
+    <div class="card__body">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Error</th>
+                        <th>Occurred At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for error in integration_errors %}
+                    <tr>
+                        <td>
+                            <span class="badge badge--danger">{{ error.service_type }}</span>
+                        </td>
+                        <td>{{ error.message }}</td>
+                        <td>{{ error.occurred_at|date:"N j, Y, P" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

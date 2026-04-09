@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ customer.name }} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">{{ customer.name }}</h1>
+        <p class="text-secondary text-sm mt-1">Customer Profile</p>
+    </div>
+    <div class="page-header__actions">
+        <a href="{% url 'customer-edit' customer.pk %}" class="btn btn--primary">
+            Edit Customer
+        </a>
+        <form method="post" action="{% url 'customer-delete' customer.pk %}" data-confirm-delete-form="Are you sure you want to delete this customer? This action cannot be undone." style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn--danger">Delete</button>
+        </form>
+        <a href="{% url 'customer-list' %}" class="btn btn--secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Contact Information</h2>
+            <p class="card__subtitle">Full profile details for {{ customer.name }}</p>
+        </div>
+    </div>
+    <div class="card__body">
+        <div class="form-row">
+            <div class="form-group">
+                <span class="form-label">Full Name</span>
+                <p>{{ customer.name }}</p>
+            </div>
+            <div class="form-group">
+                <span class="form-label">Email Address</span>
+                <p>
+                    {% if customer.email %}
+                        <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="form-row mt-4">
+            <div class="form-group">
+                <span class="form-label">Phone Number</span>
+                <p>
+                    {% if customer.phone %}
+                        <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="form-group">
+                <span class="form-label">Industry</span>
+                <p>
+                    {% if customer.industry %}
+                        <span class="badge badge--info">{{ customer.industry }}</span>
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="form-row mt-4">
+            <div class="form-group">
+                <span class="form-label">Company</span>
+                <p>
+                    {% if customer.company %}
+                        {{ customer.company }}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="form-group">
+                <span class="form-label">Created By</span>
+                <p>
+                    {% if customer.created_by %}
+                        {{ customer.created_by.get_full_name|default:customer.created_by.email }}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% if customer.address %}
+        <div class="form-row mt-4">
+            <div class="form-group form-group--full">
+                <span class="form-label">Address</span>
+                <p>{{ customer.address|linebreaksbr }}</p>
+            </div>
+        </div>
+        {% endif %}
+        {% if customer.notes %}
+        <div class="form-row mt-4">
+            <div class="form-group form-group--full">
+                <span class="form-label">Notes</span>
+                <p>{{ customer.notes|linebreaksbr }}</p>
+            </div>
+        </div>
+        {% endif %}
+        <div class="form-row mt-4">
+            <div class="form-group">
+                <span class="form-label">Created At</span>
+                <p class="text-secondary text-sm">{{ customer.created_at|date:"N j, Y, P" }}</p>
+            </div>
+            <div class="form-group">
+                <span class="form-label">Last Updated</span>
+                <p class="text-secondary text-sm">{{ customer.updated_at|date:"N j, Y, P" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tabs" id="customer-tabs">
+    <button class="tabs__item tabs__item--active" data-tab="deals" onclick="switchTab('deals')">Deals</button>
+    <button class="tabs__item" data-tab="communications" onclick="switchTab('communications')">Communications</button>
+    <button class="tabs__item" data-tab="tasks" onclick="switchTab('tasks')">Tasks</button>
+</div>
+
+<div id="tab-deals" class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Related Deals</h2>
+            <p class="card__subtitle">Deals associated with {{ customer.name }}</p>
+        </div>
+    </div>
+    <div class="card__body">
+        {% if deals %}
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Deal Name</th>
+                        <th>Stage</th>
+                        <th class="table__cell--numeric">Value</th>
+                        <th>Expected Close</th>
+                        <th>Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deal in deals %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'deal-detail' deal.pk %}">{{ deal.name }}</a>
+                        </td>
+                        <td>
+                            <span class="badge badge--primary">{{ deal.stage }}</span>
+                        </td>
+                        <td class="table__cell--numeric">${{ deal.value|default:"0" }}</td>
+                        <td>{{ deal.expected_close_date|date:"N j, Y"|default:"—" }}</td>
+                        <td>
+                            {% if deal.assigned_to %}
+                                {{ deal.assigned_to.get_full_name|default:deal.assigned_to.email }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">No deals yet</div>
+            <p class="empty-state__description">There are no deals associated with this customer.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="tab-communications" class="card mb-6" style="display:none;">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Communication History</h2>
+            <p class="card__subtitle">All communications with {{ customer.name }}</p>
+        </div>
+    </div>
+    <div class="card__body">
+        {% if communications %}
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Direction</th>
+                        <th>Date</th>
+                        <th>Logged By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comm in communications %}
+                    <tr>
+                        <td>
+                            <span class="badge badge--secondary">{{ comm.communication_type|default:comm.type|default:"—" }}</span>
+                        </td>
+                        <td>{{ comm.subject|default:"—" }}</td>
+                        <td>{{ comm.direction|default:"—" }}</td>
+                        <td>{{ comm.date|date:"N j, Y, P"|default:comm.created_at|date:"N j, Y, P" }}</td>
+                        <td>
+                            {% if comm.logged_by %}
+                                {{ comm.logged_by.get_full_name|default:comm.logged_by.email }}
+                            {% elif comm.created_by %}
+                                {{ comm.created_by.get_full_name|default:comm.created_by.email }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">No communications yet</div>
+            <p class="empty-state__description">There are no communications logged for this customer.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="tab-tasks" class="card mb-6" style="display:none;">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Associated Tasks</h2>
+            <p class="card__subtitle">Tasks linked to {{ customer.name }}</p>
+        </div>
+    </div>
+    <div class="card__body">
+        {% if tasks %}
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Due Date</th>
+                        <th>Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'task-detail' task.pk %}">{{ task.title }}</a>
+                        </td>
+                        <td>
+                            {% if task.status == "completed" %}
+                                <span class="badge badge--success">{{ task.status }}</span>
+                            {% elif task.status == "in_progress" %}
+                                <span class="badge badge--warning">{{ task.status }}</span>
+                            {% else %}
+                                <span class="badge badge--secondary">{{ task.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.priority == "urgent" or task.priority == "high" %}
+                                <span class="badge badge--danger">{{ task.priority }}</span>
+                            {% elif task.priority == "medium" %}
+                                <span class="badge badge--warning">{{ task.priority }}</span>
+                            {% else %}
+                                <span class="badge badge--secondary">{{ task.priority }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ task.due_date|date:"N j, Y"|default:"—" }}</td>
+                        <td>
+                            {% if task.assigned_to %}
+                                {{ task.assigned_to.get_full_name|default:task.assigned_to.email }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">No tasks yet</div>
+            <p class="empty-state__description">There are no tasks associated with this customer.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    var tabNames = ['deals', 'communications', 'tasks'];
+
+    window.switchTab = function(tabName) {
+        tabNames.forEach(function(name) {
+            var panel = document.getElementById('tab-' + name);
+            var btn = document.querySelector('[data-tab="' + name + '"]');
+            if (panel && btn) {
+                if (name === tabName) {
+                    panel.style.display = '';
+                    btn.classList.add('tabs__item--active');
+                } else {
+                    panel.style.display = 'none';
+                    btn.classList.remove('tabs__item--active');
+                }
+            }
+        });
+    };
+})();
+</script>
+{% endblock %}

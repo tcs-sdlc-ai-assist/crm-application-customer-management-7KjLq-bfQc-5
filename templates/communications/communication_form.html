@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Communication{% else %}Log Communication{% endif %} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">{% if form.instance.pk %}Edit Communication{% else %}Log Communication{% endif %}</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'communication-list' %}" class="btn btn--secondary">
+            Cancel
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">{% if form.instance.pk %}Edit Communication Log{% else %}New Communication Log{% endif %}</h2>
+            <p class="card__subtitle">Record a call, email, or meeting with a customer.</p>
+        </div>
+    </div>
+    <div class="card__body">
+        <form method="post" data-validate class="form" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert--danger">
+                <div class="alert__content">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.customer.id_for_label }}" class="form-label form-label--required">Customer</label>
+                    <select name="{{ form.customer.html_name }}" id="{{ form.customer.id_for_label }}" class="form-select {% if form.customer.errors %}form-select--error{% endif %}" required>
+                        <option value="">— Select Customer —</option>
+                        {% for choice in form.customer.field.queryset %}
+                        <option value="{{ choice.pk }}" {% if form.customer.value|stringformat:"s" == choice.pk|stringformat:"s" %}selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.customer.errors %}
+                    {% for error in form.customer.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    {% if form.customer.help_text %}
+                    <p class="form-help">{{ form.customer.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.communication_type.id_for_label }}" class="form-label form-label--required">Type</label>
+                    <select name="{{ form.communication_type.html_name }}" id="{{ form.communication_type.id_for_label }}" class="form-select {% if form.communication_type.errors %}form-select--error{% endif %}" required>
+                        <option value="">— Select Type —</option>
+                        {% for value, label in form.communication_type.field.choices %}
+                        {% if value %}
+                        <option value="{{ value }}" {% if form.communication_type.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.communication_type.errors %}
+                    {% for error in form.communication_type.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    {% if form.communication_type.help_text %}
+                    <p class="form-help">{{ form.communication_type.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.direction.id_for_label }}" class="form-label form-label--required">Direction</label>
+                    <select name="{{ form.direction.html_name }}" id="{{ form.direction.id_for_label }}" class="form-select {% if form.direction.errors %}form-select--error{% endif %}" required>
+                        <option value="">— Select Direction —</option>
+                        {% for value, label in form.direction.field.choices %}
+                        {% if value %}
+                        <option value="{{ value }}" {% if form.direction.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.direction.errors %}
+                    {% for error in form.direction.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    {% if form.direction.help_text %}
+                    <p class="form-help">{{ form.direction.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.subject.id_for_label }}" class="form-label form-label--required">Subject</label>
+                    <input type="text" name="{{ form.subject.html_name }}" id="{{ form.subject.id_for_label }}" value="{{ form.subject.value|default:'' }}" class="form-input {% if form.subject.errors %}form-input--error{% endif %}" placeholder="Enter subject" required>
+                    {% if form.subject.errors %}
+                    {% for error in form.subject.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    {% if form.subject.help_text %}
+                    <p class="form-help">{{ form.subject.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group form-group--full">
+                <label for="{{ form.body.id_for_label }}" class="form-label">Body</label>
+                <textarea name="{{ form.body.html_name }}" id="{{ form.body.id_for_label }}" class="form-textarea {% if form.body.errors %}form-textarea--error{% endif %}" rows="6" placeholder="Enter communication details...">{{ form.body.value|default:'' }}</textarea>
+                {% if form.body.errors %}
+                {% for error in form.body.errors %}
+                <p class="form-error">{{ error }}</p>
+                {% endfor %}
+                {% endif %}
+                {% if form.body.help_text %}
+                <p class="form-help">{{ form.body.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'communication-list' %}" class="btn btn--secondary">Cancel</a>
+                <button type="submit" class="btn btn--primary">
+                    {% if form.instance.pk %}Update Communication{% else %}Log Communication{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ report.get_report_type_display }} - {{ report.title }} | CRM App{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-detail {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .report-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding: 16px 20px;
+        background-color: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+    .report-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 140px;
+    }
+    .report-meta-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--color-text-muted);
+    }
+    .report-meta-value {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text);
+    }
+    .report-parameters {
+        margin-bottom: 24px;
+    }
+    .report-parameters-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 8px 0 0 0;
+    }
+    .report-parameters-list li {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        background-color: var(--color-primary-light);
+        color: var(--color-primary);
+        border-radius: 10px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+    .report-parameters-list li .param-key {
+        font-weight: 700;
+    }
+    .report-chart-section {
+        margin-bottom: 24px;
+    }
+    .report-table-section {
+        margin-bottom: 24px;
+    }
+    .report-table-section .table-wrapper {
+        overflow-x: auto;
+    }
+    .export-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .summary-card-item {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        text-align: center;
+    }
+    .summary-card-item .summary-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--color-text-muted);
+        margin-bottom: 4px;
+    }
+    .summary-card-item .summary-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-text);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-detail">
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">{{ report.title }}</h1>
+            <p class="text-secondary text-sm mt-1">{{ report.get_report_type_display }}</p>
+        </div>
+        <div class="page-header__actions">
+            <div class="export-buttons">
+                <a href="{% url 'report-export-csv' report.pk %}" class="btn btn--secondary btn--sm">
+                    <span class="btn__icon">&#128196;</span> Export CSV
+                </a>
+                <a href="{% url 'report-export-pdf' report.pk %}" class="btn btn--secondary btn--sm">
+                    <span class="btn__icon">&#128462;</span> Export PDF
+                </a>
+            </div>
+            <a href="{% url 'report-list' %}" class="btn btn--ghost btn--sm">Back to Reports</a>
+        </div>
+    </div>
+
+    <div class="report-meta">
+        <div class="report-meta-item">
+            <span class="report-meta-label">Status</span>
+            <span class="report-meta-value">
+                {% if report.status == 'completed' %}
+                    <span class="badge badge--success">{{ report.get_status_display }}</span>
+                {% elif report.status == 'processing' %}
+                    <span class="badge badge--warning">{{ report.get_status_display }}</span>
+                {% elif report.status == 'failed' %}
+                    <span class="badge badge--danger">{{ report.get_status_display }}</span>
+                {% elif report.status == 'archived' %}
+                    <span class="badge badge--secondary">{{ report.get_status_display }}</span>
+                {% else %}
+                    <span class="badge badge--secondary">{{ report.get_status_display }}</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="report-meta-item">
+            <span class="report-meta-label">Report Type</span>
+            <span class="report-meta-value">{{ report.get_report_type_display }}</span>
+        </div>
+        <div class="report-meta-item">
+            <span class="report-meta-label">Format</span>
+            <span class="report-meta-value">{{ report.get_format_display }}</span>
+        </div>
+        <div class="report-meta-item">
+            <span class="report-meta-label">Generated By</span>
+            <span class="report-meta-value">
+                {% if report.generated_by %}
+                    {{ report.generated_by.get_full_name|default:report.generated_by.email }}
+                {% else %}
+                    System
+                {% endif %}
+            </span>
+        </div>
+        <div class="report-meta-item">
+            <span class="report-meta-label">Generated At</span>
+            <span class="report-meta-value">
+                {% if report.generated_at %}
+                    {{ report.generated_at|date:"N j, Y, P" }}
+                {% else %}
+                    Pending
+                {% endif %}
+            </span>
+        </div>
+        <div class="report-meta-item">
+            <span class="report-meta-label">Created</span>
+            <span class="report-meta-value">{{ report.created_at|date:"N j, Y, P" }}</span>
+        </div>
+    </div>
+
+    {% if report.parameters and report.parameters.keys %}
+    <div class="report-parameters">
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Report Parameters</h2>
+            </div>
+            <div class="card__body">
+                <ul class="report-parameters-list">
+                    {% for key, value in report.parameters.items %}
+                    <li>
+                        <span class="param-key">{{ key }}:</span>
+                        <span>{{ value }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.status == 'completed' and report.data %}
+
+    {% if report.data.summary %}
+    <div class="summary-cards">
+        {% for stat in report.data.summary %}
+        <div class="summary-card-item">
+            <div class="summary-label">{{ stat.label }}</div>
+            <div class="summary-value">{{ stat.value }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="report-chart-section">
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Visualization</h2>
+            </div>
+            <div class="card__body">
+                <div class="chart-container">
+                    <canvas id="reportChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if report.data.table %}
+    <div class="report-table-section">
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">{{ report.data.table.title|default:"Data Table" }}</h2>
+            </div>
+            <div class="card__body p-0">
+                <div class="table-wrapper">
+                    <table class="table table--striped">
+                        <thead>
+                            <tr>
+                                {% for header in report.data.table.headers %}
+                                <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in report.data.table.rows %}
+                            <tr>
+                                {% for cell in row %}
+                                <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{{ report.data.table.headers|length }}" class="table__empty">
+                                    No data available.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if report.data.table.totals %}
+                        <tfoot>
+                            <tr>
+                                {% for total in report.data.table.totals %}
+                                <td class="font-bold">{{ total }}</td>
+                                {% endfor %}
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% elif report.status == 'processing' %}
+    <div class="card">
+        <div class="card__body">
+            <div class="empty-state">
+                <div class="loading">
+                    <div class="spinner spinner--lg"></div>
+                </div>
+                <h3 class="empty-state__title mt-4">Report is being generated</h3>
+                <p class="empty-state__description">This report is currently being processed. Please check back shortly.</p>
+                <a href="" class="btn btn--primary mt-4" onclick="window.location.reload(); return false;">Refresh</a>
+            </div>
+        </div>
+    </div>
+    {% elif report.status == 'failed' %}
+    <div class="card">
+        <div class="card__body">
+            <div class="empty-state">
+                <div class="empty-state__icon text-danger" style="font-size: 3rem;">&#9888;</div>
+                <h3 class="empty-state__title">Report generation failed</h3>
+                <p class="empty-state__description">An error occurred while generating this report. Please try again or contact an administrator.</p>
+                <a href="{% url 'report-list' %}" class="btn btn--primary mt-4">Back to Reports</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card__body">
+            <div class="empty-state">
+                <h3 class="empty-state__title">No report data available</h3>
+                <p class="empty-state__description">This report does not contain any data yet.</p>
+                <a href="{% url 'report-list' %}" class="btn btn--primary mt-4">Back to Reports</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if report.status == 'completed' and report.data %}
+<script>
+(function () {
+    "use strict";
+
+    var reportData = JSON.parse('{{ report.data|escapejs }}');
+    var reportType = "{{ report.report_type|escapejs }}";
+
+    var canvas = document.getElementById("reportChart");
+    if (!canvas) {
+        return;
+    }
+
+    var chartData = reportData.chart || {};
+    var labels = chartData.labels || [];
+    var values = chartData.values || [];
+    var datasets = chartData.datasets || [];
+
+    var ctx = canvas.getContext("2d");
+
+    function formatCurrency(value) {
+        if (typeof value !== "number") {
+            return value;
+        }
+        return "$" + value.toLocaleString("en-US", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+    }
+
+    var palette = [
+        "rgba(54, 162, 235, 0.7)",
+        "rgba(255, 99, 132, 0.7)",
+        "rgba(75, 192, 192, 0.7)",
+        "rgba(255, 206, 86, 0.7)",
+        "rgba(153, 102, 255, 0.7)",
+        "rgba(255, 159, 64, 0.7)",
+        "rgba(201, 203, 207, 0.7)"
+    ];
+
+    var paletteBorder = [
+        "rgba(54, 162, 235, 1)",
+        "rgba(255, 99, 132, 1)",
+        "rgba(75, 192, 192, 1)",
+        "rgba(255, 206, 86, 1)",
+        "rgba(153, 102, 255, 1)",
+        "rgba(255, 159, 64, 1)",
+        "rgba(201, 203, 207, 1)"
+    ];
+
+    if (reportType === "sales_performance") {
+        var lineDatasets = [];
+
+        if (datasets.length > 0) {
+            var colorAssignments = [
+                { bg: "rgba(54, 162, 235, 0.3)", border: "rgba(54, 162, 235, 1)" },
+                { bg: "rgba(255, 99, 132, 0.3)", border: "rgba(255, 99, 132, 1)" },
+                { bg: "rgba(75, 192, 192, 0.3)", border: "rgba(75, 192, 192, 1)" },
+                { bg: "rgba(255, 206, 86, 0.3)", border: "rgba(255, 206, 86, 1)" }
+            ];
+            for (var i = 0; i < datasets.length; i++) {
+                var ds = datasets[i];
+                var colors = colorAssignments[i % colorAssignments.length];
+                lineDatasets.push({
+                    label: ds.label || "Series " + (i + 1),
+                    data: ds.data || [],
+                    borderColor: colors.border,
+                    backgroundColor: colors.bg,
+                    fill: i === 0,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2,
+                    borderDash: ds.borderDash || []
+                });
+            }
+        } else {
+            lineDatasets.push({
+                label: chartData.dataset_label || "Revenue",
+                data: values,
+                borderColor: "rgba(54, 162, 235, 1)",
+                backgroundColor: "rgba(54, 162, 235, 0.3)",
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 2
+            });
+
+            if (chartData.target && chartData.target.length > 0) {
+                lineDatasets.push({
+                    label: "Target",
+                    data: chartData.target,
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    backgroundColor: "transparent",
+                    fill: false,
+                    tension: 0,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                    borderDash: [5, 5]
+                });
+            }
+        }
+
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: lineDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || "";
+                                return label + ": " + formatCurrency(context.parsed.y);
+                            }
+                        }
+                    },
+                    legend: { position: "top", labels: { usePointStyle: true, padding: 16 } },
+                    title: { display: !!chartData.title, text: chartData.title || "" }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) { return formatCurrency(value); }
+                        },
+                        title: { display: true, text: "Revenue ($)" }
+                    }
+                }
+            }
+        });
+
+    } else if (reportType === "customer_engagement") {
+        var bgColors = [];
+        var bdColors = [];
+        for (var j = 0; j < labels.length; j++) {
+            bgColors.push(palette[j % palette.length]);
+            bdColors.push(paletteBorder[j % paletteBorder.length]);
+        }
+
+        new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: bgColors,
+                    borderColor: bdColors,
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "55%",
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.label || "";
+                                var value = context.parsed;
+                                var total = context.dataset.data.reduce(function (sum, val) { return sum + val; }, 0);
+                                var pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return label + ": " + value + " (" + pct + "%)";
+                            }
+                        }
+                    },
+                    legend: { position: "right", labels: { usePointStyle: true, padding: 16 } },
+                    title: { display: !!chartData.title, text: chartData.title || "" }
+                }
+            }
+        });
+
+    } else if (reportType === "pipeline_health") {
+        var barDatasets = [];
+
+        if (datasets.length > 0) {
+            for (var k = 0; k < datasets.length; k++) {
+                barDatasets.push({
+                    label: datasets[k].label || "Stage " + (k + 1),
+                    data: datasets[k].data || [],
+                    backgroundColor: palette[k % palette.length],
+                    borderColor: paletteBorder[k % paletteBorder.length],
+                    borderWidth: 1,
+                    borderRadius: 4
+                });
+            }
+        } else {
+            var barBgColors = [];
+            var barBdColors = [];
+            for (var m = 0; m < labels.length; m++) {
+                barBgColors.push(palette[m % palette.length]);
+                barBdColors.push(paletteBorder[m % paletteBorder.length]);
+            }
+            barDatasets.push({
+                label: chartData.dataset_label || "Deals",
+                data: values,
+                backgroundColor: barBgColors,
+                borderColor: barBdColors,
+                borderWidth: 1,
+                borderRadius: 4
+            });
+        }
+
+        var barScales = {
+            x: { grid: { display: false } },
+            y: {
+                beginAtZero: true,
+                position: "left",
+                title: { display: true, text: chartData.y_label || "Number of Deals" },
+                ticks: { precision: 0 }
+            }
+        };
+
+        if (chartData.amounts && chartData.amounts.length > 0) {
+            barDatasets.push({
+                label: "Deal Value",
+                data: chartData.amounts,
+                backgroundColor: "rgba(255, 159, 64, 0.6)",
+                borderColor: "rgba(255, 159, 64, 1)",
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: "y1"
+            });
+            barScales.y1 = {
+                beginAtZero: true,
+                position: "right",
+                title: { display: true, text: "Deal Value ($)" },
+                grid: { drawOnChartArea: false },
+                ticks: {
+                    callback: function (value) { return formatCurrency(value); }
+                }
+            };
+            barDatasets[0].yAxisID = "y";
+        }
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: barDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || "";
+                                var value = context.parsed.y;
+                                if (label === "Deal Value") {
+                                    return label + ": " + formatCurrency(value);
+                                }
+                                return label + ": " + value;
+                            }
+                        }
+                    },
+                    legend: { position: "top", labels: { usePointStyle: true, padding: 16 } },
+                    title: { display: !!chartData.title, text: chartData.title || "" }
+                },
+                scales: barScales
+            }
+        });
+
+    } else {
+        if (values.length > 0) {
+            var fallbackBg = [];
+            var fallbackBd = [];
+            for (var n = 0; n < labels.length; n++) {
+                fallbackBg.push(palette[n % palette.length]);
+                fallbackBd.push(paletteBorder[n % paletteBorder.length]);
+            }
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: chartData.dataset_label || "Value",
+                        data: values,
+                        backgroundColor: fallbackBg,
+                        borderColor: fallbackBd,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: "top", labels: { usePointStyle: true, padding: 16 } },
+                        title: { display: !!chartData.title, text: chartData.title || "" }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        }
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

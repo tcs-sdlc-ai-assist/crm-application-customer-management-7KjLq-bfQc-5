@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Audit Logs — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Audit Logs</h1>
+        <p class="text-secondary text-sm mt-1">Track all system changes and user activity</p>
+    </div>
+    <div class="page-header__actions">
+        <a href="?export=csv" class="btn btn--secondary btn--sm">
+            Export CSV
+        </a>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__body">
+        <form method="get" action="{% url 'audit-log-list' %}" data-filter-form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="filter-user">User</label>
+                    <select class="form-select" id="filter-user" name="user" data-auto-submit>
+                        <option value="">All Users</option>
+                        {% for u in users %}
+                            <option value="{{ u.pk }}" {% if request.GET.user == u.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ u.get_full_name|default:u.email }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-entity-type">Entity Type</label>
+                    <select class="form-select" id="filter-entity-type" name="entity_type" data-auto-submit>
+                        <option value="">All Entity Types</option>
+                        {% for et in entity_types %}
+                            <option value="{{ et }}" {% if request.GET.entity_type == et %}selected{% endif %}>
+                                {{ et }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-action">Action</label>
+                    <select class="form-select" id="filter-action" name="action" data-auto-submit>
+                        <option value="">All Actions</option>
+                        <option value="create" {% if request.GET.action == "create" %}selected{% endif %}>Create</option>
+                        <option value="update" {% if request.GET.action == "update" %}selected{% endif %}>Update</option>
+                        <option value="delete" {% if request.GET.action == "delete" %}selected{% endif %}>Delete</option>
+                        <option value="view" {% if request.GET.action == "view" %}selected{% endif %}>View</option>
+                        <option value="export" {% if request.GET.action == "export" %}selected{% endif %}>Export</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-search">Search</label>
+                    <input type="text" class="form-input" id="filter-search" name="search" placeholder="Search by entity ID or type..." value="{{ request.GET.search|default:'' }}" data-auto-submit>
+                </div>
+            </div>
+            <div class="form-row mt-3">
+                <div class="form-group">
+                    <label class="form-label" for="filter-date-from">Date From</label>
+                    <input type="date" class="form-input" id="filter-date-from" name="date_from" value="{{ request.GET.date_from|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-date-to">Date To</label>
+                    <input type="date" class="form-input" id="filter-date-to" name="date_to" value="{{ request.GET.date_to|default:'' }}">
+                </div>
+            </div>
+            <div class="form-actions mt-3" style="justify-content: flex-start;">
+                <button type="submit" class="btn btn--primary btn--sm">Apply Filters</button>
+                <a href="{% url 'audit-log-list' %}" class="btn btn--ghost btn--sm" data-filter-reset>Reset Filters</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Audit Entries</h2>
+            <p class="card__subtitle">{{ total_count|default:page_obj.paginator.count|default:"0" }} total entries</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Entity Type</th>
+                    <th>Entity ID</th>
+                    <th>IP Address</th>
+                    <th>Changes Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in audit_logs %}
+                <tr>
+                    <td>
+                        <span class="text-sm">{{ log.timestamp|date:"M d, Y" }}</span><br>
+                        <span class="text-muted text-sm">{{ log.timestamp|date:"H:i:s" }}</span>
+                    </td>
+                    <td>
+                        {% if log.user %}
+                            <div class="d-flex align-center gap-2">
+                                <span class="avatar avatar--sm">{{ log.user.first_name|default:"?" |truncatechars:1 }}{{ log.user.last_name|default:"" |truncatechars:1 }}</span>
+                                <span>{{ log.user.get_full_name|default:log.user.email }}</span>
+                            </div>
+                        {% else %}
+                            <span class="text-muted">System</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.action == "create" %}
+                            <span class="badge badge--success">Create</span>
+                        {% elif log.action == "update" %}
+                            <span class="badge badge--primary">Update</span>
+                        {% elif log.action == "delete" %}
+                            <span class="badge badge--danger">Delete</span>
+                        {% elif log.action == "view" %}
+                            <span class="badge badge--info">View</span>
+                        {% elif log.action == "export" %}
+                            <span class="badge badge--warning">Export</span>
+                        {% else %}
+                            <span class="badge badge--secondary">{{ log.action }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ log.entity_type }}</td>
+                    <td>
+                        <span class="text-sm" title="{{ log.entity_id }}">{{ log.entity_id|truncatechars:12 }}</span>
+                    </td>
+                    <td>
+                        {% if log.ip_address %}
+                            <span class="text-sm">{{ log.ip_address }}</span>
+                        {% else %}
+                            <span class="text-muted text-sm">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.changes %}
+                            <div class="text-sm">
+                                {% for field, values in log.changes.items %}
+                                    <div class="mb-1">
+                                        <strong>{{ field }}:</strong>
+                                        {% if values.old is not None and values.new is not None %}
+                                            <span class="text-danger">{{ values.old|truncatechars:30 }}</span>
+                                            &rarr;
+                                            <span class="text-success">{{ values.new|truncatechars:30 }}</span>
+                                        {% elif values.new is not None %}
+                                            <span class="text-success">{{ values.new|truncatechars:30 }}</span>
+                                        {% else %}
+                                            {{ values|truncatechars:50 }}
+                                        {% endif %}
+                                    </div>
+                                    {% if forloop.counter == 3 and not forloop.last %}
+                                        <div class="text-muted">... and more</div>
+                                        {% comment %}Break out of the loop after 3 items{% endcomment %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted text-sm">No changes recorded</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state__title">No audit log entries found</div>
+                            <p class="empty-state__description">
+                                {% if request.GET %}
+                                    No entries match your current filters. Try adjusting your search criteria.
+                                {% else %}
+                                    Audit log entries will appear here as users interact with the system.
+                                {% endif %}
+                            </p>
+                            {% if request.GET %}
+                                <a href="{% url 'audit-log-list' %}" class="btn btn--secondary btn--sm">Clear Filters</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card__footer">
+        <div class="d-flex align-center justify-between flex-wrap gap-3">
+            <span class="pagination__info">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+            </span>
+            <nav class="pagination" aria-label="Audit log pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" class="pagination__item" title="First page">&laquo;</a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="pagination__item" title="Previous page">&lsaquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&laquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&lsaquo;</span>
+                {% endif %}
+
+                {% for page_num in elided_page_range %}
+                    {% if page_num == page_obj.number %}
+                        <span class="pagination__item pagination__item--active">{{ page_num }}</span>
+                    {% elif page_num == '...' %}
+                        <span class="pagination__ellipsis">&hellip;</span>
+                    {% else %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_num }}" class="pagination__item">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="pagination__item" title="Next page">&rsaquo;</a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" class="pagination__item" title="Last page">&raquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&rsaquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&raquo;</span>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Users — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Users</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'user-create' %}" class="btn btn--primary">
+            <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            New User
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">All Users</h2>
+            <p class="card__subtitle">Manage user accounts and roles</p>
+        </div>
+        <div class="card__actions">
+            <form method="get" action="{% url 'user-list' %}" data-filter-form>
+                <div class="topbar__search">
+                    <svg class="topbar__search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" name="q" class="topbar__search-input" placeholder="Search users..." value="{{ request.GET.q|default:'' }}" data-auto-submit>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Date Joined</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_obj in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-center gap-2">
+                            <div class="avatar avatar--sm">
+                                {{ user_obj.first_name|default:"U"|make_list|first }}{{ user_obj.last_name|default:""|make_list|first }}
+                            </div>
+                            <span class="font-semibold">{{ user_obj.get_full_name|default:user_obj.email }}</span>
+                        </div>
+                    </td>
+                    <td>{{ user_obj.email }}</td>
+                    <td>
+                        {% if user_obj.role == 'admin' %}
+                            <span class="badge badge--danger">Admin</span>
+                        {% elif user_obj.role == 'sales' %}
+                            <span class="badge badge--primary">Sales</span>
+                        {% elif user_obj.role == 'support' %}
+                            <span class="badge badge--info">Support</span>
+                        {% else %}
+                            <span class="badge badge--secondary">{{ user_obj.get_role_display|default:user_obj.role }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user_obj.is_active %}
+                            <span class="badge badge--success">Active</span>
+                        {% else %}
+                            <span class="badge badge--secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'user-detail' user_obj.pk %}" class="btn btn--ghost btn--sm">View</a>
+                        <a href="{% url 'user-update' user_obj.pk %}" class="btn btn--secondary btn--sm">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <svg class="empty-state__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <h3 class="empty-state__title">No users found</h3>
+                            <p class="empty-state__description">Get started by creating a new user account.</p>
+                            <a href="{% url 'user-create' %}" class="btn btn--primary">Create User</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card__footer">
+        <div class="d-flex align-center justify-between">
+            <span class="pagination__info">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} users
+            </span>
+            <nav class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="pagination__item" title="First page">&laquo;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="pagination__item">&lsaquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&laquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&lsaquo;</span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="pagination__item pagination__item--active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="pagination__item">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="pagination__item">&rsaquo;</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="pagination__item" title="Last page">&raquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&rsaquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&raquo;</span>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

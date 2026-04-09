@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Deal{% else %}New Deal{% endif %} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">{% if form.instance.pk %}Edit Deal{% else %}New Deal{% endif %}</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'deal-list' %}" class="btn btn--secondary">
+            Cancel
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">{% if form.instance.pk %}Update Deal Details{% else %}Create a New Deal{% endif %}</h2>
+            <p class="card__subtitle">{% if form.instance.pk %}Modify the deal information below.{% else %}Fill in the details to create a new deal.{% endif %}</p>
+        </div>
+    </div>
+    <div class="card__body">
+        <form method="post" class="form" data-validate novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert--danger">
+                <div class="alert__content">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label form-label--required">Title</label>
+                    <input type="text"
+                           name="{{ form.title.html_name }}"
+                           id="{{ form.title.id_for_label }}"
+                           value="{{ form.title.value|default:'' }}"
+                           class="form-input {% if form.title.errors %}form-input--error{% endif %}"
+                           placeholder="Enter deal title"
+                           required>
+                    {% if form.title.help_text %}
+                    <p class="form-help">{{ form.title.help_text }}</p>
+                    {% endif %}
+                    {% if form.title.errors %}
+                    {% for error in form.title.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.customer.id_for_label }}" class="form-label form-label--required">Customer</label>
+                    <select name="{{ form.customer.html_name }}"
+                            id="{{ form.customer.id_for_label }}"
+                            class="form-select {% if form.customer.errors %}form-select--error{% endif %}"
+                            required>
+                        <option value="">Select a customer</option>
+                        {% for value, label in form.customer.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.customer.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.customer.help_text %}
+                    <p class="form-help">{{ form.customer.help_text }}</p>
+                    {% endif %}
+                    {% if form.customer.errors %}
+                    {% for error in form.customer.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.stage.id_for_label }}" class="form-label form-label--required">Stage</label>
+                    <select name="{{ form.stage.html_name }}"
+                            id="{{ form.stage.id_for_label }}"
+                            class="form-select {% if form.stage.errors %}form-select--error{% endif %}"
+                            required>
+                        <option value="">Select a stage</option>
+                        {% for value, label in form.stage.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.stage.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.stage.help_text %}
+                    <p class="form-help">{{ form.stage.help_text }}</p>
+                    {% endif %}
+                    {% if form.stage.errors %}
+                    {% for error in form.stage.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.value.id_for_label }}" class="form-label form-label--required">Deal Value ($)</label>
+                    <input type="number"
+                           name="{{ form.value.html_name }}"
+                           id="{{ form.value.id_for_label }}"
+                           value="{{ form.value.value|default:'' }}"
+                           class="form-input {% if form.value.errors %}form-input--error{% endif %}"
+                           placeholder="0.00"
+                           step="0.01"
+                           min="0"
+                           required>
+                    {% if form.value.help_text %}
+                    <p class="form-help">{{ form.value.help_text }}</p>
+                    {% endif %}
+                    {% if form.value.errors %}
+                    {% for error in form.value.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.expected_close_date.id_for_label }}" class="form-label">Expected Close Date</label>
+                    <input type="date"
+                           name="{{ form.expected_close_date.html_name }}"
+                           id="{{ form.expected_close_date.id_for_label }}"
+                           value="{{ form.expected_close_date.value|default:'' }}"
+                           class="form-input {% if form.expected_close_date.errors %}form-input--error{% endif %}">
+                    {% if form.expected_close_date.help_text %}
+                    <p class="form-help">{{ form.expected_close_date.help_text }}</p>
+                    {% endif %}
+                    {% if form.expected_close_date.errors %}
+                    {% for error in form.expected_close_date.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.assigned_to.id_for_label }}" class="form-label">Assigned To</label>
+                    <select name="{{ form.assigned_to.html_name }}"
+                            id="{{ form.assigned_to.id_for_label }}"
+                            class="form-select {% if form.assigned_to.errors %}form-select--error{% endif %}">
+                        <option value="">Unassigned</option>
+                        {% for value, label in form.assigned_to.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.assigned_to.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.assigned_to.help_text %}
+                    <p class="form-help">{{ form.assigned_to.help_text }}</p>
+                    {% endif %}
+                    {% if form.assigned_to.errors %}
+                    {% for error in form.assigned_to.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group form-group--full">
+                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                <textarea name="{{ form.description.html_name }}"
+                          id="{{ form.description.id_for_label }}"
+                          class="form-textarea {% if form.description.errors %}form-textarea--error{% endif %}"
+                          placeholder="Add any additional details about this deal..."
+                          rows="4">{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.help_text %}
+                <p class="form-help">{{ form.description.help_text }}</p>
+                {% endif %}
+                {% if form.description.errors %}
+                {% for error in form.description.errors %}
+                <p class="form-error">{{ error }}</p>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'deal-list' %}" class="btn btn--secondary">Cancel</a>
+                <button type="submit" class="btn btn--primary">
+                    {% if form.instance.pk %}Update Deal{% else %}Create Deal{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

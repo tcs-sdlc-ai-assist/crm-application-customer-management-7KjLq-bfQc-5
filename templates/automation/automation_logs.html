@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Automation Logs — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Automation Logs</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'automation-list' %}" class="btn btn--secondary">
+            Back to Automation Rules
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Execution Logs</h2>
+            <p class="card__subtitle">History of all automation rule executions</p>
+        </div>
+    </div>
+
+    <div class="card__body p-0">
+        <form method="get" action="" data-filter-form class="d-flex align-center flex-wrap gap-3 p-4" style="border-bottom: 1px solid var(--color-border);">
+            <div class="form-group" style="min-width: 180px;">
+                <label class="form-label" for="filter-status">Status</label>
+                <select class="form-select" id="filter-status" name="status" data-auto-submit>
+                    <option value="">All Statuses</option>
+                    <option value="success" {% if request.GET.status == "success" %}selected{% endif %}>Success</option>
+                    <option value="failed" {% if request.GET.status == "failed" %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div class="form-group" style="min-width: 200px;">
+                <label class="form-label" for="filter-search">Search</label>
+                <input type="text" class="form-input" id="filter-search" name="search" placeholder="Search by rule name..." value="{{ request.GET.search|default:'' }}" data-auto-submit>
+            </div>
+            <div class="form-group" style="align-self: flex-end;">
+                <button type="button" class="btn btn--ghost btn--sm" data-filter-reset>Reset</button>
+            </div>
+        </form>
+
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Rule Name</th>
+                        <th>Trigger</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>Status</th>
+                        <th>Result Message</th>
+                        <th>Triggered By</th>
+                        <th>Executed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in automation_logs %}
+                    <tr>
+                        <td>
+                            <span class="font-semibold">{{ log.rule.name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge--info">{{ log.rule.get_trigger_type_display }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge--secondary">{{ log.rule.get_action_type_display }}</span>
+                        </td>
+                        <td>
+                            <span class="text-sm text-secondary">{{ log.target_entity_type }} #{{ log.target_entity_id }}</span>
+                        </td>
+                        <td>
+                            {% if log.status == "success" %}
+                                <span class="badge badge--success">Success</span>
+                            {% elif log.status == "failed" %}
+                                <span class="badge badge--danger">Failed</span>
+                            {% else %}
+                                <span class="badge badge--secondary">{{ log.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.result_message %}
+                                <span class="text-sm" title="{{ log.result_message }}">{{ log.result_message|truncatewords:12 }}</span>
+                            {% else %}
+                                <span class="text-muted text-sm">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.triggered_by %}
+                                {{ log.triggered_by.get_full_name|default:log.triggered_by.email }}
+                            {% else %}
+                                <span class="text-muted">System</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-sm">{{ log.executed_at|date:"M d, Y H:i" }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-state__title">No automation logs found</div>
+                                <p class="empty-state__description">
+                                    Automation execution logs will appear here once rules have been triggered.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card__footer">
+        <div class="d-flex align-center justify-between flex-wrap gap-3">
+            <span class="pagination__info">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} log{{ paginator.count|pluralize:"s" }}
+            </span>
+            <nav class="pagination" aria-label="Automation logs pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="First page">&laquo;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="Previous page">&lsaquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&laquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&lsaquo;</span>
+                {% endif %}
+
+                {% for page_num in paginator.page_range %}
+                    {% if page_num == page_obj.number %}
+                        <span class="pagination__item pagination__item--active" aria-current="page">{{ page_num }}</span>
+                    {% elif page_num > page_obj.number|add:"-3" and page_num < page_obj.number|add:"3" %}
+                        <a href="?page={{ page_num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item">{{ page_num }}</a>
+                    {% elif page_num == 1 or page_num == paginator.num_pages %}
+                        <a href="?page={{ page_num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item">{{ page_num }}</a>
+                    {% elif page_num == page_obj.number|add:"-3" or page_num == page_obj.number|add:"3" %}
+                        <span class="pagination__ellipsis">&hellip;</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="Next page">&rsaquo;</a>
+                    <a href="?page={{ paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="Last page">&raquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&rsaquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&raquo;</span>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

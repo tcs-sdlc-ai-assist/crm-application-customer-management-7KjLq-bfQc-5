@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Meetings — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Meetings</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'meeting-create' %}" class="btn btn--primary">
+            <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Schedule Meeting
+        </a>
+    </div>
+</div>
+
+<form method="get" action="" data-filter-form class="card mb-6">
+    <div class="card__body">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="filter-search">Search</label>
+                <input type="text" id="filter-search" name="search" class="form-input" placeholder="Search meetings..." value="{{ request.GET.search|default:'' }}" data-auto-submit>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="filter-status">Status</label>
+                <select id="filter-status" name="status" class="form-select" data-auto-submit>
+                    <option value="">All Meetings</option>
+                    <option value="upcoming" {% if request.GET.status == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="past" {% if request.GET.status == 'past' %}selected{% endif %}>Past</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if upcoming_meetings %}
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Upcoming Meetings</h2>
+            <p class="card__subtitle">{{ upcoming_meetings|length }} upcoming meeting{{ upcoming_meetings|length|pluralize }}</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Customer</th>
+                    <th>Organizer</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Location</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for meeting in upcoming_meetings %}
+                <tr>
+                    <td>
+                        <a href="{% url 'meeting-detail' meeting.pk %}" class="font-semibold">{{ meeting.title }}</a>
+                    </td>
+                    <td>
+                        {% if meeting.customer %}
+                            <a href="{% url 'customer-detail' meeting.customer.pk %}">{{ meeting.customer }}</a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if meeting.organizer %}
+                            {{ meeting.organizer.get_full_name|default:meeting.organizer.email }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ meeting.start_time|date:"M d, Y g:i A" }}</td>
+                    <td>{{ meeting.end_time|date:"M d, Y g:i A" }}</td>
+                    <td>
+                        {% if meeting.location %}
+                            {{ meeting.location }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'meeting-detail' meeting.pk %}" class="btn btn--ghost btn--sm">View</a>
+                        <a href="{% url 'meeting-update' meeting.pk %}" class="btn btn--secondary btn--sm">Edit</a>
+                        <a href="{% url 'meeting-delete' meeting.pk %}" class="btn btn--danger btn--sm" data-confirm-delete="Are you sure you want to delete this meeting?">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if past_meetings %}
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Past Meetings</h2>
+            <p class="card__subtitle">{{ past_meetings|length }} past meeting{{ past_meetings|length|pluralize }}</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Customer</th>
+                    <th>Organizer</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Location</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for meeting in past_meetings %}
+                <tr>
+                    <td>
+                        <a href="{% url 'meeting-detail' meeting.pk %}" class="font-semibold">{{ meeting.title }}</a>
+                    </td>
+                    <td>
+                        {% if meeting.customer %}
+                            <a href="{% url 'customer-detail' meeting.customer.pk %}">{{ meeting.customer }}</a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if meeting.organizer %}
+                            {{ meeting.organizer.get_full_name|default:meeting.organizer.email }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ meeting.start_time|date:"M d, Y g:i A" }}</td>
+                    <td>{{ meeting.end_time|date:"M d, Y g:i A" }}</td>
+                    <td>
+                        {% if meeting.location %}
+                            {{ meeting.location }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'meeting-detail' meeting.pk %}" class="btn btn--ghost btn--sm">View</a>
+                        <a href="{% url 'meeting-update' meeting.pk %}" class="btn btn--secondary btn--sm">Edit</a>
+                        <a href="{% url 'meeting-delete' meeting.pk %}" class="btn btn--danger btn--sm" data-confirm-delete="Are you sure you want to delete this meeting?">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not upcoming_meetings and not past_meetings and not meetings %}
+<div class="card">
+    <div class="empty-state">
+        <svg class="empty-state__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <h3 class="empty-state__title">No meetings scheduled</h3>
+        <p class="empty-state__description">Schedule your first meeting to start tracking customer interactions and follow-ups.</p>
+        <a href="{% url 'meeting-create' %}" class="btn btn--primary">
+            <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Schedule Meeting
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% if meetings %}
+<div class="card mb-6">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">All Meetings</h2>
+            <p class="card__subtitle">{{ meetings|length }} meeting{{ meetings|length|pluralize }}</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Customer</th>
+                    <th>Organizer</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Location</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for meeting in meetings %}
+                <tr>
+                    <td>
+                        <a href="{% url 'meeting-detail' meeting.pk %}" class="font-semibold">{{ meeting.title }}</a>
+                    </td>
+                    <td>
+                        {% if meeting.customer %}
+                            <a href="{% url 'customer-detail' meeting.customer.pk %}">{{ meeting.customer }}</a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if meeting.organizer %}
+                            {{ meeting.organizer.get_full_name|default:meeting.organizer.email }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ meeting.start_time|date:"M d, Y g:i A" }}</td>
+                    <td>{{ meeting.end_time|date:"M d, Y g:i A" }}</td>
+                    <td>
+                        {% if meeting.location %}
+                            {{ meeting.location }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'meeting-detail' meeting.pk %}" class="btn btn--ghost btn--sm">View</a>
+                        <a href="{% url 'meeting-update' meeting.pk %}" class="btn btn--secondary btn--sm">Edit</a>
+                        <a href="{% url 'meeting-delete' meeting.pk %}" class="btn btn--danger btn--sm" data-confirm-delete="Are you sure you want to delete this meeting?">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pagination__item">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pagination__item">&lsaquo; Previous</a>
+    {% else %}
+        <span class="pagination__item pagination__item--disabled">&laquo; First</span>
+        <span class="pagination__item pagination__item--disabled">&lsaquo; Previous</span>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span class="pagination__item pagination__item--active">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pagination__item">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pagination__item">Next &rsaquo;</a>
+        <a href="?page={{ paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pagination__item">Last &raquo;</a>
+    {% else %}
+        <span class="pagination__item pagination__item--disabled">Next &rsaquo;</span>
+        <span class="pagination__item pagination__item--disabled">Last &raquo;</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

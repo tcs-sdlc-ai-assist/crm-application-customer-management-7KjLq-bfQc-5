@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Customers — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Customers</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'customer-create' %}" class="btn btn--primary">
+            <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Customer
+        </a>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__body">
+        <form method="get" action="{% url 'customer-list' %}" data-filter-form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="search">Search</label>
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        class="form-input"
+                        placeholder="Search by name or email..."
+                        value="{{ request.GET.search|default:'' }}"
+                        data-auto-submit
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="industry">Industry</label>
+                    <select id="industry" name="industry" class="form-select" data-auto-submit>
+                        <option value="">All Industries</option>
+                        {% for industry_choice in industries %}
+                            <option value="{{ industry_choice }}" {% if request.GET.industry == industry_choice %}selected{% endif %}>{{ industry_choice }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions" style="justify-content: flex-start; padding-top: 4px;">
+                <button type="submit" class="btn btn--primary btn--sm">Filter</button>
+                <a href="{% url 'customer-list' %}" class="btn btn--secondary btn--sm" data-filter-reset>Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">All Customers</h2>
+            <p class="card__subtitle">
+                {% if page_obj %}
+                    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} customer{{ page_obj.paginator.count|pluralize }}
+                {% else %}
+                    {{ customers|length }} customer{{ customers|length|pluralize }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Company</th>
+                    <th>Industry</th>
+                    <th>Created</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>
+                        <a href="{% url 'customer-detail' customer.pk %}" class="font-semibold">{{ customer.name }}</a>
+                    </td>
+                    <td>
+                        <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                    </td>
+                    <td>{{ customer.phone|default:"—" }}</td>
+                    <td>{{ customer.company|default:"—" }}</td>
+                    <td>
+                        <span class="badge badge--secondary">{{ customer.industry }}</span>
+                    </td>
+                    <td>{{ customer.created_at|date:"M d, Y" }}</td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'customer-detail' customer.pk %}" class="btn btn--ghost btn--sm" title="View">
+                            View
+                        </a>
+                        <a href="{% url 'customer-edit' customer.pk %}" class="btn btn--ghost btn--sm" title="Edit">
+                            Edit
+                        </a>
+                        <a href="{% url 'customer-delete' customer.pk %}" class="btn btn--ghost btn--sm text-danger" data-confirm-delete="Are you sure you want to delete this customer? This action cannot be undone." title="Delete">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <svg class="empty-state__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <h3 class="empty-state__title">No customers found</h3>
+                            <p class="empty-state__description">
+                                {% if request.GET.search or request.GET.industry %}
+                                    No customers match your current filters. Try adjusting your search criteria.
+                                {% else %}
+                                    Get started by adding your first customer.
+                                {% endif %}
+                            </p>
+                            {% if not request.GET.search and not request.GET.industry %}
+                                <a href="{% url 'customer-create' %}" class="btn btn--primary">Add Customer</a>
+                            {% else %}
+                                <a href="{% url 'customer-list' %}" class="btn btn--secondary">Clear Filters</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj and page_obj.has_other_pages %}
+    <div class="card__footer">
+        <nav class="pagination" aria-label="Customer list pagination">
+            {% if page_obj.has_previous %}
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.industry %}industry={{ request.GET.industry }}&{% endif %}page={{ page_obj.previous_page_number }}" class="pagination__item" aria-label="Previous page">
+                    &laquo; Prev
+                </a>
+            {% else %}
+                <span class="pagination__item pagination__item--disabled" aria-disabled="true">&laquo; Prev</span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="pagination__item pagination__item--active" aria-current="page">{{ num }}</span>
+                {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.industry %}industry={{ request.GET.industry }}&{% endif %}page={{ num }}" class="pagination__item">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.industry %}industry={{ request.GET.industry }}&{% endif %}page={{ num }}" class="pagination__item">{{ num }}</a>
+                {% elif num == 2 or num == page_obj.paginator.num_pages|add:"-1" %}
+                    <span class="pagination__ellipsis">&hellip;</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.industry %}industry={{ request.GET.industry }}&{% endif %}page={{ page_obj.next_page_number }}" class="pagination__item" aria-label="Next page">
+                    Next &raquo;
+                </a>
+            {% else %}
+                <span class="pagination__item pagination__item--disabled" aria-disabled="true">Next &raquo;</span>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

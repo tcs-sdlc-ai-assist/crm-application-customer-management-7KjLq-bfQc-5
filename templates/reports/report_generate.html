@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Generate Report — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Generate Report</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'report-list' %}" class="btn btn--secondary">
+            Back to Reports
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">Report Configuration</h2>
+            <p class="card__subtitle">Select the report type and filters to generate your report.</p>
+        </div>
+    </div>
+    <div class="card__body">
+        <form method="post" action="{% url 'report-generate' %}" class="form" data-validate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert--danger">
+                <div class="alert__content">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.report_type.id_for_label }}" class="form-label form-label--required">Report Type</label>
+                    <select name="{{ form.report_type.html_name }}" id="{{ form.report_type.id_for_label }}" class="form-select {% if form.report_type.errors %}form-select--error{% endif %}" required>
+                        <option value="">— Select Report Type —</option>
+                        {% for value, label in form.report_type.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.report_type.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.report_type.errors %}
+                        {% for error in form.report_type.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.report_type.help_text %}
+                    <span class="form-help">{{ form.report_type.help_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.format.id_for_label }}" class="form-label form-label--required">Output Format</label>
+                    <select name="{{ form.format.html_name }}" id="{{ form.format.id_for_label }}" class="form-select {% if form.format.errors %}form-select--error{% endif %}" required>
+                        <option value="">— Select Format —</option>
+                        {% for value, label in form.format.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.format.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.format.errors %}
+                        {% for error in form.format.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    {% if form.format.help_text %}
+                    <span class="form-help">{{ form.format.help_text }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group form-group--full">
+                <label for="{{ form.title.id_for_label }}" class="form-label form-label--required">Report Title</label>
+                <input type="text" name="{{ form.title.html_name }}" id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}" class="form-input {% if form.title.errors %}form-input--error{% endif %}" placeholder="Enter a descriptive title for this report" required>
+                {% if form.title.errors %}
+                    {% for error in form.title.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+                {% if form.title.help_text %}
+                <span class="form-help">{{ form.title.help_text }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.date_range_start.id_for_label }}" class="form-label">Start Date</label>
+                    <input type="date" name="{{ form.date_range_start.html_name }}" id="{{ form.date_range_start.id_for_label }}" value="{{ form.date_range_start.value|default:'' }}" class="form-input {% if form.date_range_start.errors %}form-input--error{% endif %}">
+                    {% if form.date_range_start.errors %}
+                        {% for error in form.date_range_start.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Filter report data from this date.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.date_range_end.id_for_label }}" class="form-label">End Date</label>
+                    <input type="date" name="{{ form.date_range_end.html_name }}" id="{{ form.date_range_end.id_for_label }}" value="{{ form.date_range_end.value|default:'' }}" class="form-input {% if form.date_range_end.errors %}form-input--error{% endif %}">
+                    {% if form.date_range_end.errors %}
+                        {% for error in form.date_range_end.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Filter report data up to this date.</span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.user.id_for_label }}" class="form-label">Filter by User</label>
+                    <select name="{{ form.user.html_name }}" id="{{ form.user.id_for_label }}" class="form-select {% if form.user.errors %}form-select--error{% endif %}">
+                        <option value="">— All Users —</option>
+                        {% for value, label in form.user.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.user.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.user.errors %}
+                        {% for error in form.user.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Optionally filter report data by a specific user.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.stage.id_for_label }}" class="form-label">Filter by Stage</label>
+                    <select name="{{ form.stage.html_name }}" id="{{ form.stage.id_for_label }}" class="form-select {% if form.stage.errors %}form-select--error{% endif %}">
+                        <option value="">— All Stages —</option>
+                        {% for value, label in form.stage.field.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if form.stage.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if form.stage.errors %}
+                        {% for error in form.stage.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="form-help">Optionally filter report data by pipeline stage.</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'report-list' %}" class="btn btn--secondary">Cancel</a>
+                <button type="submit" class="btn btn--primary">
+                    Generate Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    var startDateInput = document.getElementById('{{ form.date_range_start.id_for_label }}');
+    var endDateInput = document.getElementById('{{ form.date_range_end.id_for_label }}');
+
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', function () {
+            if (startDateInput.value) {
+                endDateInput.setAttribute('min', startDateInput.value);
+                if (endDateInput.value && endDateInput.value < startDateInput.value) {
+                    endDateInput.value = startDateInput.value;
+                }
+            } else {
+                endDateInput.removeAttribute('min');
+            }
+        });
+
+        endDateInput.addEventListener('change', function () {
+            if (endDateInput.value) {
+                startDateInput.setAttribute('max', endDateInput.value);
+                if (startDateInput.value && startDateInput.value > endDateInput.value) {
+                    startDateInput.value = endDateInput.value;
+                }
+            } else {
+                startDateInput.removeAttribute('max');
+            }
+        });
+
+        if (startDateInput.value) {
+            endDateInput.setAttribute('min', startDateInput.value);
+        }
+        if (endDateInput.value) {
+            startDateInput.setAttribute('max', endDateInput.value);
+        }
+    }
+})();
+</script>
+{% endblock %}

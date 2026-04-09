@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Deals — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Deals</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'deal-create' %}" class="btn btn--primary">
+            <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Deal
+        </a>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__body">
+        <form method="get" action="{% url 'deal-list' %}" data-filter-form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="filter-search">Search</label>
+                    <input
+                        type="text"
+                        id="filter-search"
+                        name="search"
+                        class="form-input"
+                        placeholder="Search by deal name or customer..."
+                        value="{{ request.GET.search|default:'' }}"
+                        data-auto-submit
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-stage">Stage</label>
+                    <select id="filter-stage" name="stage" class="form-select" data-auto-submit>
+                        <option value="">All Stages</option>
+                        {% for stage_value, stage_label in stage_choices %}
+                            <option value="{{ stage_value }}" {% if request.GET.stage == stage_value %}selected{% endif %}>{{ stage_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-owner">Owner</label>
+                    <select id="filter-owner" name="owner" class="form-select" data-auto-submit>
+                        <option value="">All Owners</option>
+                        {% for owner in owners %}
+                            <option value="{{ owner.pk }}" {% if request.GET.owner == owner.pk|stringformat:"s" %}selected{% endif %}>{{ owner.get_full_name|default:owner.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group d-flex align-center" style="padding-top: 24px;">
+                    <button type="submit" class="btn btn--secondary btn--sm mr-2">Apply</button>
+                    <a href="{% url 'deal-list' %}" class="btn btn--ghost btn--sm" data-filter-reset>Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">All Deals</h2>
+            <p class="card__subtitle">{{ page_obj.paginator.count|default:deals.count|default:"0" }} deal{{ page_obj.paginator.count|default:deals.count|pluralize }} found</p>
+        </div>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Deal Name</th>
+                    <th>Customer</th>
+                    <th class="table__cell--numeric">Value</th>
+                    <th>Stage</th>
+                    <th>Owner</th>
+                    <th>Expected Close</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for deal in deals %}
+                <tr>
+                    <td>
+                        <a href="{% url 'deal-detail' deal.pk %}" class="font-semibold">{{ deal.name }}</a>
+                    </td>
+                    <td>
+                        {% if deal.customer %}
+                            <a href="{% url 'customer-detail' deal.customer.pk %}">{{ deal.customer.name }}</a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="table__cell--numeric font-semibold">${{ deal.value|floatformat:2|default:"0.00" }}</td>
+                    <td>
+                        {% if deal.stage == 'won' or deal.stage == 'closed_won' %}
+                            <span class="badge badge--success">{{ deal.get_stage_display }}</span>
+                        {% elif deal.stage == 'lost' or deal.stage == 'closed_lost' %}
+                            <span class="badge badge--danger">{{ deal.get_stage_display }}</span>
+                        {% elif deal.stage == 'negotiation' %}
+                            <span class="badge badge--warning">{{ deal.get_stage_display }}</span>
+                        {% elif deal.stage == 'proposal' %}
+                            <span class="badge badge--info">{{ deal.get_stage_display }}</span>
+                        {% elif deal.stage == 'qualification' %}
+                            <span class="badge badge--primary">{{ deal.get_stage_display }}</span>
+                        {% else %}
+                            <span class="badge badge--secondary">{{ deal.get_stage_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if deal.owner %}
+                            <div class="d-flex align-center gap-2">
+                                <span class="avatar avatar--sm">{{ deal.owner.first_name|make_list|first|default:"?" }}{{ deal.owner.last_name|make_list|first|default:"" }}</span>
+                                <span>{{ deal.owner.get_full_name|default:deal.owner.email }}</span>
+                            </div>
+                        {% else %}
+                            <span class="text-muted">Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if deal.expected_close_date %}
+                            {{ deal.expected_close_date|date:"M d, Y" }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'deal-detail' deal.pk %}" class="btn btn--ghost btn--sm">View</a>
+                        <a href="{% url 'deal-update' deal.pk %}" class="btn btn--ghost btn--sm">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <svg class="empty-state__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                            <h3 class="empty-state__title">No deals found</h3>
+                            <p class="empty-state__description">
+                                {% if request.GET.search or request.GET.stage or request.GET.owner %}
+                                    No deals match your current filters. Try adjusting your search criteria.
+                                {% else %}
+                                    Get started by creating your first deal.
+                                {% endif %}
+                            </p>
+                            {% if not request.GET.search and not request.GET.stage and not request.GET.owner %}
+                                <a href="{% url 'deal-create' %}" class="btn btn--primary">Create Deal</a>
+                            {% else %}
+                                <a href="{% url 'deal-list' %}" class="btn btn--secondary">Clear Filters</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card__footer">
+        <div class="d-flex align-center justify-between flex-wrap gap-4">
+            <span class="pagination__info">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} deals
+            </span>
+            <nav class="pagination" aria-label="Deal list pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" class="pagination__item" aria-label="First page">&laquo;</a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="pagination__item" aria-label="Previous page">&lsaquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&laquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&lsaquo;</span>
+                {% endif %}
+
+                {% for page_num in paginator.page_range %}
+                    {% if page_num == page_obj.number %}
+                        <span class="pagination__item pagination__item--active" aria-current="page">{{ page_num }}</span>
+                    {% elif page_num > page_obj.number|add:"-3" and page_num < page_obj.number|add:"3" %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_num }}" class="pagination__item">{{ page_num }}</a>
+                    {% elif page_num == 1 or page_num == paginator.num_pages %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_num }}" class="pagination__item">{{ page_num }}</a>
+                    {% elif page_num == page_obj.number|add:"-3" or page_num == page_obj.number|add:"3" %}
+                        <span class="pagination__ellipsis">&hellip;</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="pagination__item" aria-label="Next page">&rsaquo;</a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ paginator.num_pages }}" class="pagination__item" aria-label="Last page">&raquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&rsaquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&raquo;</span>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Customer{% else %}Add Customer{% endif %} — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">{% if form.instance.pk %}Edit Customer{% else %}Add Customer{% endif %}</h1>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">{% if form.instance.pk %}Update Customer Details{% else %}New Customer{% endif %}</h2>
+            <p class="card__subtitle">{% if form.instance.pk %}Modify the customer information below.{% else %}Fill in the details to create a new customer.{% endif %}</p>
+        </div>
+    </div>
+    <div class="card__body">
+        {% if form.non_field_errors %}
+        <div class="alert alert--danger mb-4">
+            <div class="alert__content">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post" data-validate novalidate>
+            {% csrf_token %}
+
+            <div class="form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label form-label--required">Name</label>
+                        <input type="text"
+                               id="{{ form.name.id_for_label }}"
+                               name="{{ form.name.html_name }}"
+                               value="{{ form.name.value|default:'' }}"
+                               class="form-input{% if form.name.errors %} form-input--error{% endif %}"
+                               placeholder="Enter customer name"
+                               required
+                               maxlength="128">
+                        {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.name.help_text %}
+                        <span class="form-help">{{ form.name.help_text }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}" class="form-label form-label--required">Email</label>
+                        <input type="email"
+                               id="{{ form.email.id_for_label }}"
+                               name="{{ form.email.html_name }}"
+                               value="{{ form.email.value|default:'' }}"
+                               class="form-input{% if form.email.errors %} form-input--error{% endif %}"
+                               placeholder="Enter email address"
+                               required
+                               maxlength="128">
+                        {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.email.help_text %}
+                        <span class="form-help">{{ form.email.help_text }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.phone.id_for_label }}" class="form-label">Phone</label>
+                        <input type="tel"
+                               id="{{ form.phone.id_for_label }}"
+                               name="{{ form.phone.html_name }}"
+                               value="{{ form.phone.value|default:'' }}"
+                               class="form-input{% if form.phone.errors %} form-input--error{% endif %}"
+                               placeholder="Enter phone number"
+                               data-validate-phone
+                               maxlength="32">
+                        {% if form.phone.errors %}
+                        {% for error in form.phone.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.phone.help_text %}
+                        <span class="form-help">{{ form.phone.help_text }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.company.id_for_label }}" class="form-label">Company</label>
+                        <input type="text"
+                               id="{{ form.company.id_for_label }}"
+                               name="{{ form.company.html_name }}"
+                               value="{{ form.company.value|default:'' }}"
+                               class="form-input{% if form.company.errors %} form-input--error{% endif %}"
+                               placeholder="Enter company name"
+                               maxlength="128">
+                        {% if form.company.errors %}
+                        {% for error in form.company.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.company.help_text %}
+                        <span class="form-help">{{ form.company.help_text }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.industry.id_for_label }}" class="form-label form-label--required">Industry</label>
+                        <input type="text"
+                               id="{{ form.industry.id_for_label }}"
+                               name="{{ form.industry.html_name }}"
+                               value="{{ form.industry.value|default:'' }}"
+                               class="form-input{% if form.industry.errors %} form-input--error{% endif %}"
+                               placeholder="Enter industry"
+                               required
+                               maxlength="64">
+                        {% if form.industry.errors %}
+                        {% for error in form.industry.errors %}
+                        <span class="form-error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.industry.help_text %}
+                        <span class="form-help">{{ form.industry.help_text }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        &nbsp;
+                    </div>
+                </div>
+
+                <div class="form-group form-group--full">
+                    <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                    <textarea id="{{ form.address.id_for_label }}"
+                              name="{{ form.address.html_name }}"
+                              class="form-textarea{% if form.address.errors %} form-textarea--error{% endif %}"
+                              placeholder="Enter address"
+                              rows="3">{{ form.address.value|default:'' }}</textarea>
+                    {% if form.address.errors %}
+                    {% for error in form.address.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                    {% endif %}
+                    {% if form.address.help_text %}
+                    <span class="form-help">{{ form.address.help_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group form-group--full">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                    <textarea id="{{ form.notes.id_for_label }}"
+                              name="{{ form.notes.html_name }}"
+                              class="form-textarea{% if form.notes.errors %} form-textarea--error{% endif %}"
+                              placeholder="Enter any additional notes"
+                              rows="4">{{ form.notes.value|default:'' }}</textarea>
+                    {% if form.notes.errors %}
+                    {% for error in form.notes.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                    {% endif %}
+                    {% if form.notes.help_text %}
+                    <span class="form-help">{{ form.notes.help_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'customer-list' %}" class="btn btn--secondary">Cancel</a>
+                    <button type="submit" class="btn btn--primary">
+                        {% if form.instance.pk %}Update Customer{% else %}Create Customer{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

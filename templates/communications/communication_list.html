@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Communications — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Communications</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'communication-create' %}" class="btn btn--primary">
+            <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Log Communication
+        </a>
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card__body">
+        <form method="get" action="{% url 'communication-list' %}" data-filter-form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="filter-type">Type</label>
+                    <select class="form-select" id="filter-type" name="type" data-auto-submit>
+                        <option value="">All Types</option>
+                        <option value="email" {% if request.GET.type == "email" %}selected{% endif %}>Email</option>
+                        <option value="phone" {% if request.GET.type == "phone" %}selected{% endif %}>Phone</option>
+                        <option value="meeting" {% if request.GET.type == "meeting" %}selected{% endif %}>Meeting</option>
+                        <option value="note" {% if request.GET.type == "note" %}selected{% endif %}>Note</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-direction">Direction</label>
+                    <select class="form-select" id="filter-direction" name="direction" data-auto-submit>
+                        <option value="">All Directions</option>
+                        <option value="inbound" {% if request.GET.direction == "inbound" %}selected{% endif %}>Inbound</option>
+                        <option value="outbound" {% if request.GET.direction == "outbound" %}selected{% endif %}>Outbound</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="filter-search">Search</label>
+                    <input type="text" class="form-input" id="filter-search" name="search" placeholder="Search by subject or customer..." value="{{ request.GET.search|default:'' }}" data-auto-submit>
+                </div>
+                <div class="form-group" style="align-self: flex-end;">
+                    <button type="button" class="btn btn--secondary" data-filter-reset>Clear Filters</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Subject</th>
+                    <th>Direction</th>
+                    <th>Date</th>
+                    <th class="table__cell--actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for communication in communications %}
+                <tr>
+                    <td>
+                        {% if communication.type == "email" %}
+                            <span class="badge badge--primary">Email</span>
+                        {% elif communication.type == "phone" %}
+                            <span class="badge badge--success">Phone</span>
+                        {% elif communication.type == "meeting" %}
+                            <span class="badge badge--warning">Meeting</span>
+                        {% elif communication.type == "note" %}
+                            <span class="badge badge--secondary">Note</span>
+                        {% else %}
+                            <span class="badge badge--secondary">{{ communication.type|default:"—" }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if communication.customer %}
+                            <a href="{% url 'customer-detail' communication.customer.pk %}">{{ communication.customer.name }}</a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'communication-detail' communication.pk %}">{{ communication.subject|default:"(No subject)" }}</a>
+                    </td>
+                    <td>
+                        {% if communication.direction == "inbound" %}
+                            <span class="badge badge--info">Inbound</span>
+                        {% elif communication.direction == "outbound" %}
+                            <span class="badge badge--secondary">Outbound</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ communication.created_at|date:"M d, Y H:i" }}</td>
+                    <td class="table__cell--actions">
+                        <a href="{% url 'communication-detail' communication.pk %}" class="btn btn--ghost btn--sm">View</a>
+                        <a href="{% url 'communication-update' communication.pk %}" class="btn btn--ghost btn--sm">Edit</a>
+                        <a href="{% url 'communication-delete' communication.pk %}" class="btn btn--danger btn--sm" data-confirm-delete="Are you sure you want to delete this communication log? This action cannot be undone.">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <svg class="empty-state__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            <h3 class="empty-state__title">No communications found</h3>
+                            <p class="empty-state__description">
+                                {% if request.GET.type or request.GET.direction or request.GET.search %}
+                                    No communications match your current filters. Try adjusting your search criteria.
+                                {% else %}
+                                    Get started by logging your first communication with a customer.
+                                {% endif %}
+                            </p>
+                            {% if not request.GET.type and not request.GET.direction and not request.GET.search %}
+                                <a href="{% url 'communication-create' %}" class="btn btn--primary">Log Communication</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card__footer">
+        <div class="d-flex align-center justify-between flex-wrap gap-4">
+            <span class="pagination__info">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} communications
+            </span>
+            <nav class="pagination" aria-label="Communication list pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.direction %}&direction={{ request.GET.direction }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="First page">&laquo;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.direction %}&direction={{ request.GET.direction }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="Previous page">&lsaquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&laquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&lsaquo;</span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="pagination__item pagination__item--active" aria-current="page">{{ num }}</span>
+                    {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                        <a href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.direction %}&direction={{ request.GET.direction }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item">{{ num }}</a>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                        <a href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.direction %}&direction={{ request.GET.direction }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item">{{ num }}</a>
+                    {% elif num == 2 or num == page_obj.paginator.num_pages|add:"-1" %}
+                        <span class="pagination__ellipsis">&hellip;</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.direction %}&direction={{ request.GET.direction }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="Next page">&rsaquo;</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.direction %}&direction={{ request.GET.direction }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pagination__item" aria-label="Last page">&raquo;</a>
+                {% else %}
+                    <span class="pagination__item pagination__item--disabled">&rsaquo;</span>
+                    <span class="pagination__item pagination__item--disabled">&raquo;</span>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

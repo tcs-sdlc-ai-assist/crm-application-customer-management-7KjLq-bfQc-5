@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Automation Rules — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Automation Rules</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'automation-rule-create' %}" class="btn btn--primary">
+            + Create Rule
+        </a>
+    </div>
+</div>
+
+{% if filter_form %}
+<div class="card mb-6">
+    <div class="card__body">
+        <form method="get" action="{% url 'automation-list' %}" data-filter-form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="trigger_type">Trigger Type</label>
+                    <select class="form-select" name="trigger_type" id="trigger_type" data-auto-submit>
+                        <option value="">All Triggers</option>
+                        <option value="meeting_completed" {% if request.GET.trigger_type == "meeting_completed" %}selected{% endif %}>Meeting Completed</option>
+                        <option value="call_completed" {% if request.GET.trigger_type == "call_completed" %}selected{% endif %}>Call Completed</option>
+                        <option value="demo_completed" {% if request.GET.trigger_type == "demo_completed" %}selected{% endif %}>Demo Completed</option>
+                        <option value="new_lead" {% if request.GET.trigger_type == "new_lead" %}selected{% endif %}>New Lead</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="action_type">Action Type</label>
+                    <select class="form-select" name="action_type" id="action_type" data-auto-submit>
+                        <option value="">All Actions</option>
+                        <option value="send_email" {% if request.GET.action_type == "send_email" %}selected{% endif %}>Send Email</option>
+                        <option value="assign_lead" {% if request.GET.action_type == "assign_lead" %}selected{% endif %}>Assign Lead</option>
+                        <option value="create_task" {% if request.GET.action_type == "create_task" %}selected{% endif %}>Create Task</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="is_active">Status</label>
+                    <select class="form-select" name="is_active" id="is_active" data-auto-submit>
+                        <option value="">All</option>
+                        <option value="true" {% if request.GET.is_active == "true" %}selected{% endif %}>Active</option>
+                        <option value="false" {% if request.GET.is_active == "false" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card__header">
+        <div>
+            <h2 class="card__title">All Rules</h2>
+            <p class="card__subtitle">Manage automation rules for your CRM workflows</p>
+        </div>
+    </div>
+    <div class="card__body p-0">
+        <div class="table-wrapper">
+            {% if rules %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Trigger Type</th>
+                        <th>Action Type</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                        <th class="table__cell--actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in rules %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'automation-rule-detail' rule.pk %}">
+                                <strong>{{ rule.name }}</strong>
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge badge--info">{{ rule.get_trigger_type_display }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge--secondary">{{ rule.get_action_type_display }}</span>
+                        </td>
+                        <td>
+                            {% if rule.is_active %}
+                                <span class="badge badge--success">Active</span>
+                            {% else %}
+                                <span class="badge badge--danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ rule.created_by.get_full_name|default:rule.created_by.email }}</td>
+                        <td>{{ rule.created_at|date:"M d, Y" }}</td>
+                        <td class="table__cell--actions">
+                            <a href="{% url 'automation-rule-detail' rule.pk %}" class="btn btn--ghost btn--sm" title="View">
+                                View
+                            </a>
+                            <a href="{% url 'automation-rule-update' rule.pk %}" class="btn btn--secondary btn--sm" title="Edit">
+                                Edit
+                            </a>
+                            <a href="{% url 'automation-rule-delete' rule.pk %}" class="btn btn--danger btn--sm" data-confirm-delete="Are you sure you want to delete this automation rule? This action cannot be undone." title="Delete">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state__title">No automation rules found</div>
+                <p class="empty-state__description">
+                    Create your first automation rule to streamline your CRM workflows.
+                </p>
+                <a href="{% url 'automation-rule-create' %}" class="btn btn--primary">
+                    + Create Rule
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% if is_paginated %}
+    <div class="card__footer">
+        <div class="pagination">
+            <span class="pagination__info">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} rules
+            </span>
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if request.GET.trigger_type %}&trigger_type={{ request.GET.trigger_type }}{% endif %}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" class="pagination__item" title="First page">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.trigger_type %}&trigger_type={{ request.GET.trigger_type }}{% endif %}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" class="pagination__item" title="Previous page">&lsaquo;</a>
+            {% else %}
+                <span class="pagination__item pagination__item--disabled">&laquo;</span>
+                <span class="pagination__item pagination__item--disabled">&lsaquo;</span>
+            {% endif %}
+
+            {% for num in paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="pagination__item pagination__item--active">{{ num }}</span>
+                {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                    <a href="?page={{ num }}{% if request.GET.trigger_type %}&trigger_type={{ request.GET.trigger_type }}{% endif %}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" class="pagination__item">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.trigger_type %}&trigger_type={{ request.GET.trigger_type }}{% endif %}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" class="pagination__item" title="Next page">&rsaquo;</a>
+                <a href="?page={{ paginator.num_pages }}{% if request.GET.trigger_type %}&trigger_type={{ request.GET.trigger_type }}{% endif %}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" class="pagination__item" title="Last page">&raquo;</a>
+            {% else %}
+                <span class="pagination__item pagination__item--disabled">&rsaquo;</span>
+                <span class="pagination__item pagination__item--disabled">&raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

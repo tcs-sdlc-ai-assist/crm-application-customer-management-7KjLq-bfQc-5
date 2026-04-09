@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Profile — CRM App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">My Profile</h1>
+    <div class="page-header__actions">
+        <a href="{% url 'profile-edit' %}" class="btn btn--primary">
+            Edit Profile
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="widget">
+        <div class="widget__header">
+            <span class="widget__label">Assigned Deals</span>
+            <div class="widget__icon widget__icon--primary">
+                <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+        <div class="widget__value">{{ assigned_deals_count|default:"0" }}</div>
+    </div>
+    <div class="widget">
+        <div class="widget__header">
+            <span class="widget__label">Open Tasks</span>
+            <div class="widget__icon widget__icon--warning">
+                <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+        </div>
+        <div class="widget__value">{{ open_tasks_count|default:"0" }}</div>
+    </div>
+    <div class="widget">
+        <div class="widget__header">
+            <span class="widget__label">Completed Tasks</span>
+            <div class="widget__icon widget__icon--success">
+                <svg class="btn__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+        </div>
+        <div class="widget__value">{{ completed_tasks_count|default:"0" }}</div>
+    </div>
+</div>
+
+<div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <h2 class="card__title">Profile Information</h2>
+                <p class="card__subtitle">Your personal and contact details</p>
+            </div>
+        </div>
+        <div class="card__body">
+            <div class="form" style="gap: 16px;">
+                <div class="d-flex align-center gap-4 mb-6">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile picture" class="avatar avatar--lg" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover;">
+                    {% else %}
+                        <div class="avatar avatar--lg" style="width: 72px; height: 72px; font-size: 1.5rem;">
+                            {{ user.first_name|default:"U"|make_list|first }}{{ user.last_name|default:""|make_list|first }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--color-text);">{{ user.get_full_name|default:user.email }}</h3>
+                        <span class="badge badge--primary" style="margin-top: 4px;">{{ user.get_role_display|default:user.role }}</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.first_name|default:"—" }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.last_name|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.email }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.phone_number|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Job Title</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.job_title|default:"—" }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.department|default:"—" }}</div>
+                    </div>
+                </div>
+
+                {% if user.date_of_birth %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.date_of_birth|date:"N j, Y" }}</div>
+                    </div>
+                    <div class="form-group"></div>
+                </div>
+                {% endif %}
+
+                {% if user.bio %}
+                <div class="form-group form-group--full">
+                    <label class="form-label">Bio</label>
+                    <div class="form-textarea" style="background-color: var(--color-bg); cursor: default; min-height: 80px;">{{ user.bio }}</div>
+                </div>
+                {% endif %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Member Since</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.created_at|date:"N j, Y" }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Updated</label>
+                        <div class="form-input" style="background-color: var(--color-bg); cursor: default;">{{ user.updated_at|date:"N j, Y, P" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="card">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">Assigned Deals</h2>
+                    <p class="card__subtitle">Your most recent deals</p>
+                </div>
+                {% if assigned_deals %}
+                <a href="{% url 'deal-list' %}" class="btn btn--ghost btn--sm">View All</a>
+                {% endif %}
+            </div>
+            <div class="card__body" style="padding: 0;">
+                {% if assigned_deals %}
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Deal</th>
+                                <th>Stage</th>
+                                <th class="table__cell--numeric">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for deal in assigned_deals %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'deal-detail' deal.pk %}" style="font-weight: 600;">{{ deal.name|default:deal }}</a>
+                                </td>
+                                <td>
+                                    <span class="badge badge--info">{{ deal.stage|default:"—" }}</span>
+                                </td>
+                                <td class="table__cell--numeric">${{ deal.value|default:"0"|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 32px 24px;">
+                    <p class="empty-state__description">No deals assigned to you yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">Recent Tasks</h2>
+                    <p class="card__subtitle">Your upcoming and recent tasks</p>
+                </div>
+                {% if recent_tasks %}
+                <a href="{% url 'task-list' %}" class="btn btn--ghost btn--sm">View All</a>
+                {% endif %}
+            </div>
+            <div class="card__body" style="padding: 0;">
+                {% if recent_tasks %}
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in recent_tasks %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'task-detail' task.pk %}" style="font-weight: 600;">{{ task.title|default:task }}</a>
+                                </td>
+                                <td>
+                                    {% if task.priority == "urgent" %}
+                                        <span class="badge badge--danger">Urgent</span>
+                                    {% elif task.priority == "high" %}
+                                        <span class="badge badge--warning">High</span>
+                                    {% elif task.priority == "medium" %}
+                                        <span class="badge badge--info">Medium</span>
+                                    {% else %}
+                                        <span class="badge badge--secondary">Low</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if task.status == "completed" %}
+                                        <span class="badge badge--success">Completed</span>
+                                    {% elif task.status == "in_progress" %}
+                                        <span class="badge badge--primary">In Progress</span>
+                                    {% else %}
+                                        <span class="badge badge--secondary">To Do</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-sm text-secondary">
+                                    {% if task.due_date %}
+                                        {{ task.due_date|date:"M j, Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding: 32px 24px;">
+                    <p class="empty-state__description">No tasks assigned to you yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
